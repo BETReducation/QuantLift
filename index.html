@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>QuantLift</title>
+<link rel="stylesheet" href="css/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ── Notification banner ── -->
+<div class="notif-banner" id="notifBanner">
+  <div class="notif-icon">💪</div>
+  <div class="notif-body">
+    <div class="notif-title" id="notifTitle">Time to train!</div>
+    <div class="notif-msg" id="notifMsg">Your Strength session is scheduled today.</div>
+  </div>
+  <div class="notif-close" onclick="hideNotif()">✕</div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!--  PAGE: Landing / Auth                   -->
+<!-- ════════════════════════════════════════ -->
+<div class="page active" id="page-auth">
+  <div class="landing-hero">
+    <div class="landing-logo logo">
+      <div class="logo-mark">QL</div>
+      <div class="logo-text">Quant<span>Lift</span></div>
+    </div>
+
+    <div class="landing-tagline">Train smarter.<br><span>Grow stronger.</span></div>
+    <div class="landing-sub">Track every rep, analyse every session, and hit your goals with data-driven precision.</div>
+
+    <div class="landing-features">
+      <div class="landing-feature">
+        <div class="landing-feature-icon" style="background:var(--primary-dim)">📊</div>
+        <div>
+          <div class="landing-feature-title">Data-driven insights</div>
+          <div class="landing-feature-sub">Analytics that tell you exactly when to push harder</div>
+        </div>
+      </div>
+      <div class="landing-feature">
+        <div class="landing-feature-icon" style="background:var(--green-dim)">🎯</div>
+        <div>
+          <div class="landing-feature-title">Personalised plans</div>
+          <div class="landing-feature-sub">Workouts adapted to your goals and schedule</div>
+        </div>
+      </div>
+      <div class="landing-feature">
+        <div class="landing-feature-icon" style="background:var(--accent-dim)">🥗</div>
+        <div>
+          <div class="landing-feature-title">Nutrition tracking</div>
+          <div class="landing-feature-sub">Macros and meals synced with your training</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="landing-ctas">
+      <button class="btn btn-primary btn-block" onclick="showOnboarding()">Create free account</button>
+      <button class="btn btn-outline btn-block" onclick="openSheet('loginSheet')">Log in</button>
+      <div class="landing-guest-link" onclick="enterGuest()">Browse as guest →</div>
+    </div>
+
+    <div class="landing-footer">No credit card required · Free forever for the basics</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!--  PAGE: Onboarding (3 steps)             -->
+<!-- ════════════════════════════════════════ -->
+<div class="page" id="page-onboarding">
+  <div class="onb-header">
+    <button class="onb-back" id="onbBack" onclick="onbGoBack()">← Back</button>
+    <div class="onb-step-label" id="onbStepLabel">Step 1 of 3</div>
+    <div style="width:48px"></div>
+  </div>
+
+  <div class="onb-dots">
+    <div class="onb-dot active" id="dot-1"></div>
+    <div class="onb-dot" id="dot-2"></div>
+    <div class="onb-dot" id="dot-3"></div>
+  </div>
+
+  <!-- Step 1: Account -->
+  <div class="onb-step active" id="onb-1">
+    <div class="onb-step-title">Create your account</div>
+    <div class="onb-step-sub">You'll use this to log in and access your data across devices.</div>
+    <div class="input-group"><label class="input-label">Full name</label><input class="input" type="text" id="onbName" placeholder="Alex Johnson"></div>
+    <div class="input-group"><label class="input-label">Email address</label><input class="input" type="email" id="onbEmail" placeholder="you@example.com"></div>
+    <div class="input-group"><label class="input-label">Password</label><input class="input" type="password" id="onbPass" placeholder="Min. 8 characters"></div>
+    <div class="input-group"><label class="input-label">Confirm password</label><input class="input" type="password" id="onbPass2" placeholder="Repeat password"></div>
+    <button class="btn btn-primary btn-block" onclick="onbNext()">Continue →</button>
+  </div>
+
+  <!-- Step 2: About you -->
+  <div class="onb-step" id="onb-2">
+    <div class="onb-step-title">About you</div>
+    <div class="onb-step-sub">Used to personalise your calorie targets, strength benchmarks, and progress tracking.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="input-group"><label class="input-label">Age</label><input class="input" type="number" id="onbAge" placeholder="25" min="13" max="99"></div>
+      <div class="input-group"><label class="input-label">Biological sex</label>
+        <select class="select" id="onbSex">
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="other">Prefer not to say</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="input-group"><label class="input-label">Weight (kg)</label><input class="input" type="number" id="onbWeight" placeholder="75" min="30" max="300"></div>
+      <div class="input-group"><label class="input-label">Height (cm)</label><input class="input" type="number" id="onbHeight" placeholder="175" min="100" max="250"></div>
+    </div>
+    <div class="input-group">
+      <label class="input-label">Experience level</label>
+      <div class="type-grid" style="grid-template-columns:1fr 1fr 1fr">
+        <div class="type-chip selected" data-onb-exp="beginner" onclick="onbSelectExp(this)"><span class="type-emoji">🌱</span>Beginner</div>
+        <div class="type-chip" data-onb-exp="intermediate" onclick="onbSelectExp(this)"><span class="type-emoji">💡</span>Intermediate</div>
+        <div class="type-chip" data-onb-exp="advanced" onclick="onbSelectExp(this)"><span class="type-emoji">🏆</span>Advanced</div>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="onbNext()">Continue →</button>
+  </div>
+
+  <!-- Step 3: Training preferences -->
+  <div class="onb-step" id="onb-3">
+    <div class="onb-step-title">Your training</div>
+    <div class="onb-step-sub">We'll use this to build your first personalised plan.</div>
+    <div class="input-group">
+      <label class="input-label">Primary goal</label>
+      <div class="type-grid">
+        <div class="type-chip selected" data-onb-goal="hypertrophy" onclick="onbSelectGoal(this)"><span class="type-emoji">💪</span>Build muscle</div>
+        <div class="type-chip" data-onb-goal="strength" onclick="onbSelectGoal(this)"><span class="type-emoji">🏋️</span>Gain strength</div>
+        <div class="type-chip" data-onb-goal="fat_loss" onclick="onbSelectGoal(this)"><span class="type-emoji">🔥</span>Lose body fat</div>
+        <div class="type-chip" data-onb-goal="endurance" onclick="onbSelectGoal(this)"><span class="type-emoji">🏃</span>Endurance</div>
+        <div class="type-chip" data-onb-goal="fitness" onclick="onbSelectGoal(this)"><span class="type-emoji">🎯</span>General fitness</div>
+        <div class="type-chip" data-onb-goal="athletic" onclick="onbSelectGoal(this)"><span class="type-emoji">⚡</span>Athletic perf.</div>
+      </div>
+    </div>
+    <div class="input-group">
+      <label class="input-label">Training days per week</label>
+      <div class="day-picker" id="onbDayPicker">
+        <div class="day-chip" onclick="onbSelectDays(this,1)">1</div>
+        <div class="day-chip" onclick="onbSelectDays(this,2)">2</div>
+        <div class="day-chip" onclick="onbSelectDays(this,3)">3</div>
+        <div class="day-chip selected" onclick="onbSelectDays(this,4)">4</div>
+        <div class="day-chip" onclick="onbSelectDays(this,5)">5</div>
+        <div class="day-chip" onclick="onbSelectDays(this,6)">6</div>
+        <div class="day-chip" onclick="onbSelectDays(this,7)">7</div>
+      </div>
+    </div>
+    <div class="input-group">
+      <label class="input-label">Typical session length</label>
+      <select class="select" id="onbSessionLen">
+        <option value="30-45">30–45 minutes</option>
+        <option value="45-60">45–60 minutes</option>
+        <option value="60-75" selected>60–75 minutes</option>
+        <option value="75-90">75–90 minutes</option>
+        <option value="90+">90+ minutes</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label class="input-label">Equipment available</label>
+      <div class="type-grid">
+        <div class="type-chip selected" data-onb-equip="full" onclick="onbSelectEquip(this)"><span class="type-emoji">🏢</span>Full gym</div>
+        <div class="type-chip" data-onb-equip="home" onclick="onbSelectEquip(this)"><span class="type-emoji">🏠</span>Home gym</div>
+        <div class="type-chip" data-onb-equip="dumbbells" onclick="onbSelectEquip(this)"><span class="type-emoji">🎽</span>Dumbbells</div>
+        <div class="type-chip" data-onb-equip="bodyweight" onclick="onbSelectEquip(this)"><span class="type-emoji">🧘</span>Bodyweight</div>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="completeOnboarding()">Start training 🚀</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!--  PAGE: Home                             -->
+<!-- ════════════════════════════════════════ -->
+<div class="page" id="page-home">
+  <div class="header">
+    <div>
+      <div class="header-title" id="homeGreet">Good morning, Alex 👋</div>
+      <div class="header-sub">Thursday · Week 12 of your programme</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div id="guestBadge" style="display:none;background:var(--accent-dim);color:var(--accent);font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;cursor:pointer" onclick="openSheet('memberPromptSheet')">GUEST</div>
+      <div onclick="showNotif('💪','Rest day reminder','Tomorrow is Strength A. Prep your gear tonight!')" style="cursor:pointer">
+        <div style="width:36px;height:36px;border-radius:10px;background:var(--card);border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px">🔔</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="home-greeting" style="padding-top:16px">
+    <div class="home-streak">
+      <div class="streak-badge" id="homeStreak">🔥 12-day streak</div>
+      <div class="pill pill-green">On track</div>
+    </div>
+  </div>
+
+  <div class="scroll-body" style="padding-top:12px">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div class="card-title" style="margin-bottom:0">Today's session</div>
+        <div class="pill pill-primary">Strength A</div>
+      </div>
+      <div class="today-ex-item"><div class="ex-dot"></div><div class="ex-name">Barbell Squat</div><div class="ex-detail">4 × 6 @ 100kg</div></div>
+      <div class="today-ex-item"><div class="ex-dot accent"></div><div class="ex-name">Bench Press</div><div class="ex-detail">4 × 6 @ 80kg</div></div>
+      <div class="today-ex-item"><div class="ex-dot green"></div><div class="ex-name">Deadlift</div><div class="ex-detail">3 × 5 @ 130kg</div></div>
+      <div class="today-ex-item"><div class="ex-dot" style="background:var(--amber)"></div><div class="ex-name">Pull-up</div><div class="ex-detail">3 × 8 bodyweight</div></div>
+      <button class="btn btn-primary btn-block" style="margin-top:14px" onclick="navTo('track')">Start session →</button>
+    </div>
+  </div>
+
+  <div style="padding:0 20px 8px;font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.6px">Quick actions</div>
+  <div class="quick-actions">
+    <div class="quick-btn accent-card" onclick="navTo('plan')">
+      <div class="quick-btn-icon" style="background:var(--primary-dim)">📋</div>
+      <div><div class="quick-btn-label">Plan</div><div class="quick-btn-sub">Goals & schedule</div></div>
+    </div>
+    <div class="quick-btn" onclick="navTo('analytics')">
+      <div class="quick-btn-icon" style="background:var(--green-dim)">📊</div>
+      <div><div class="quick-btn-label">Analytics</div><div class="quick-btn-sub">Progress & trends</div></div>
+    </div>
+    <div class="quick-btn" onclick="navTo('suggestions')">
+      <div class="quick-btn-icon" style="background:var(--accent-dim)">💡</div>
+      <div><div class="quick-btn-label">Insights</div><div class="quick-btn-sub">AI suggestions</div></div>
+    </div>
+    <div class="quick-btn" onclick="navTo('nutrition')">
+      <div class="quick-btn-icon" style="background:var(--amber-dim)">🥗</div>
+      <div><div class="quick-btn-label">Nutrition</div><div class="quick-btn-sub">Fuel your gains</div></div>
+    </div>
+  </div>
+
+  <div class="scroll-body" style="padding-top:4px">
+    <div class="card" id="weekStatsCard">
+      <div class="card-title">This week</div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="stat-val" style="color:var(--primary)" id="statSessions">3</div><div class="stat-lbl">Sessions done</div></div>
+        <div class="stat-box"><div class="stat-val" style="color:var(--green)" id="statTime">4.2h</div><div class="stat-lbl">Total time</div></div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="stat-val" style="color:var(--accent)" id="statVolume">8,450</div><div class="stat-lbl">kg lifted</div></div>
+        <div class="stat-box"><div class="stat-val" style="color:var(--amber)" id="statKcal">1,840</div><div class="stat-lbl">kcal burned</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!--  PAGE: Plan                             -->
+<!-- ════════════════════════════════════════ -->
+<div class="page" id="page-plan">
+  <div class="header">
+    <div>
+      <div class="header-title">My plan</div>
+      <div class="header-sub">12-week strength programme</div>
+    </div>
+    <button class="btn btn-sm btn-outline" onclick="guardedAction('plan','planSheet')">Edit</button>
+  </div>
+
+  <div class="scroll-body">
+    <div class="goal-hero">
+      <div class="goal-hero-label">Primary goal</div>
+      <div class="goal-hero-title">Build muscle & increase strength</div>
+      <div class="goal-progress-label"><span>Week 12 of 12</span><span>100%</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+        <div class="pill pill-primary">Hypertrophy</div>
+        <div class="pill pill-green">Strength</div>
+        <div class="pill pill-accent">4 days/week</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Targets</div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:var(--text2)">Squat 1RM</span><span><b>120kg</b> <span style="color:var(--text3)">/ 140kg goal</span></span></div><div class="progress-bar"><div class="progress-fill" style="width:86%"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:var(--text2)">Bench Press 1RM</span><span><b>95kg</b> <span style="color:var(--text3)">/ 110kg goal</span></span></div><div class="progress-bar"><div class="progress-fill accent" style="width:86%"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:var(--text2)">Deadlift 1RM</span><span><b>155kg</b> <span style="color:var(--text3)">/ 180kg goal</span></span></div><div class="progress-bar"><div class="progress-fill green" style="width:86%"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:var(--text2)">Body weight</span><span><b>82kg</b> <span style="color:var(--text3)">/ 85kg goal</span></span></div><div class="progress-bar"><div class="progress-fill amber" style="width:96%"></div></div></div>
+      </div>
+    </div>
+
+    <div class="card-title" style="padding:0 0 8px 0">Weekly schedule</div>
+    <div class="week-plan" style="margin:0">
+      <div class="week-day" onclick="openSheet('daySheet')"><div class="day-num">MON</div><div class="day-info"><div class="day-name">Strength A</div><div class="day-type">Squat · Bench · Deadlift · Pull-up</div></div><div class="pill pill-primary" style="font-size:11px">Strength</div></div>
+      <div class="week-day rest"><div class="day-num">TUE</div><div class="day-info"><div class="day-name">Rest / Cardio</div><div class="day-type">Active recovery or 20min walk</div></div><div class="pill" style="background:var(--card2);color:var(--text3);font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600">Rest</div></div>
+      <div class="week-day" onclick="openSheet('daySheet')"><div class="day-num">WED</div><div class="day-info"><div class="day-name">Hypertrophy B</div><div class="day-type">OHP · Row · Dips · Curls · Triceps</div></div><div class="pill pill-accent" style="font-size:11px">Hypertrophy</div></div>
+      <div class="week-day rest"><div class="day-num">THU</div><div class="day-info"><div class="day-name">Rest</div><div class="day-type">Today — recovery day</div></div><div class="pill" style="background:var(--card2);color:var(--text3);font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600">Rest</div></div>
+      <div class="week-day" onclick="openSheet('daySheet')"><div class="day-num">FRI</div><div class="day-info"><div class="day-name">Strength C</div><div class="day-type">Squat · Romanian DL · Leg press · Calf</div></div><div class="pill pill-green" style="font-size:11px">Endurance</div></div>
+      <div class="week-day rest"><div class="day-num">SAT</div><div class="day-info"><div class="day-name">HIIT / Cardio</div><div class="day-type">30min sprint intervals or rowing</div></div><div class="pill pill-amber" style="font-size:11px">HIIT</div></div>
+      <div class="week-day rest"><div class="day-num">SUN</div><div class="day-info"><div class="day-name">Full rest</div><div class="day-type">Sleep, stretch, recover</div></div><div class="pill" style="background:var(--card2);color:var(--text3);font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600">Rest</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!--  PAGE: Track                            -->
+<!-- ════════════════════════════════════════ -->
+<div class="page" id="page-track">
+  <div class="header">
+    <div>
+      <div class="header-title">Live session</div>
+      <div class="header-sub" id="trackSubtitle">Strength A · Free session</div>
+    </div>
+    <button class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:none" onclick="endSessionAction()">End</button>
+  </div>
+
+  <div class="session-header">
+    <div>
+      <div class="session-timer" id="timerDisplay">00:00</div>
+      <div class="session-status" id="timerStatus">Tap ▶ to start</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:22px;font-weight:800;color:var(--primary)" id="volumeDisplay">0</div>
+      <div style="font-size:11px;color:var(--text2)">kg total volume</div>
+    </div>
+    <div class="timer-controls">
+      <button class="timer-btn play" id="playBtn" onclick="toggleTimer()">▶</button>
+      <button class="timer-btn stop" onclick="endSessionAction()">■</button>
+    </div>
+  </div>
+
+  <!-- Guest mode track notice -->
+  <div id="guestTrackNotice" style="display:none;margin:0 20px 8px;background:var(--amber-dim);border:0.5px solid var(--amber);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px">
+    <span style="font-size:16px">ℹ️</span>
+    <span style="font-size:12px;color:var(--text2)">Guest mode — session data won't be saved. <span style="color:var(--primary);cursor:pointer;font-weight:600" onclick="openSheet('memberPromptSheet')">Sign up to save →</span></span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:32px 1fr 1fr 1fr 32px;gap:8px;padding:6px 20px 0;align-items:center">
+    <div class="col-label">Set</div>
+    <div class="col-label">kg</div>
+    <div class="col-label">Reps</div>
+    <div class="col-label">RPE</div>
+    <div></div>
+  </div>
+
+  <div class="ex-list" id="exerciseList"></div>
+  <div class="add-ex-btn"><button class="btn btn-outline btn-block" onclick="openSheet('addExSheet')">+ Add exercise</button></div>
+
+  <div class="scroll-body" style="padding-top:0">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div class="card-title" style="margin-bottom:2px">Rest timer</div>
+          <div style="font-size:24px;font-weight:800;color:var(--amber)" id="restDisplay">2:30</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm btn-outline" onclick="setRest(60)">1m</button>
+          <button class="btn btn-sm btn-outline" onclick="setRest(90)">1:30</button>
+          <button class="btn btn-sm" style="background:var(--amber-dim);color:var(--amber);border:none" onclick="setRest(150)">2:30</button>
+          <button class="btn btn-sm btn-outline" onclick="setRest(180)">3m</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Session notes</div>
+      <textarea class="textarea" placeholder="How's the session feeling? Any notes on form, fatigue, or PRs…"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!--  PAGE: Analytics                        -->
+<!-- ════════════════════════════════════════ -->
+<div class="page" id="page-analytics">
+  <div class="header">
+    <div class="header-title">Analytics</div>
+    <div class="period-tabs" style="margin-bottom:0">
+      <div class="period-tab active" onclick="setPeriod(this,'1M')">1M</div>
+      <div class="period-tab" onclick="setPeriod(this,'3M')">3M</div>
+      <div class="period-tab" onclick="setPeriod(this,'6M')">6M</div>
+      <div class="period-tab" onclick="setPeriod(this,'1Y')">1Y</div>
+    </div>
+  </div>
+
+  <!-- Guest sample data notice -->
+  <div id="guestAnalyticsBanner" style="display:none;margin:12px 20px 0;background:var(--primary-dim2);border:0.5px solid var(--primary);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px">
+    <span style="font-size:20px">👁️</span>
+    <div style="flex:1">
+      <div style="font-size:13px;font-weight:700;margin-bottom:2px">Viewing sample data</div>
+      <div style="font-size:12px;color:var(--text2)">Sign up to track your real progress and personalised insights.</div>
+    </div>
+    <button class="btn btn-sm btn-primary" onclick="openSheet('memberPromptSheet')">Sign up</button>
+  </div>
+
+  <div class="scroll-body">
+    <div class="metric-grid">
+      <div class="metric-card"><div class="metric-val" style="color:var(--primary)">18</div><div class="metric-lbl">Sessions</div><div class="metric-change up">↑ 20% vs last month</div></div>
+      <div class="metric-card"><div class="metric-val" style="color:var(--green)">42h</div><div class="metric-lbl">Time trained</div><div class="metric-change up">↑ 8h vs last month</div></div>
+      <div class="metric-card"><div class="metric-val" style="color:var(--accent)">186k</div><div class="metric-lbl">kg lifted</div><div class="metric-change up">↑ 14% vs last month</div></div>
+      <div class="metric-card"><div class="metric-val" style="color:var(--amber)">7,680</div><div class="metric-lbl">kcal burned</div><div class="metric-change down">↓ 3% vs last month</div></div>
+    </div>
+    <div class="chart-card"><div class="chart-title">Weekly training volume</div><div class="chart-sub">Total kg lifted per week</div><div class="chart-wrap" style="height:180px"><canvas id="volumeChart"></canvas></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="chart-card" style="margin-bottom:0"><div class="chart-title">Session types</div><div class="chart-sub">This month</div><div class="chart-wrap" style="height:130px"><canvas id="typeChart"></canvas></div></div>
+      <div class="chart-card" style="margin-bottom:0"><div class="chart-title">Muscle groups</div><div class="chart-sub">Volume split</div><div class="chart-wrap" style="height:130px"><canvas id="muscleChart"></canvas></div></div>
+    </div>
+    <div class="chart-card" style="margin-top:12px"><div class="chart-title">Strength progress</div><div class="chart-sub">Estimated 1RM over time</div><div class="chart-wrap" style="height:180px"><canvas id="strengthChart"></canvas></div></div>
+    <div class="card">
+      <div class="card-title">Personal records</div>
+      <div class="pr-list">
+        <div class="pr-item"><div><div class="pr-name">Barbell Squat</div><div class="pr-meta">Set 3 weeks ago</div></div><div><div class="pr-val">120kg</div><div style="font-size:11px;color:var(--green);text-align:right">+5kg</div></div></div>
+        <div class="pr-item"><div><div class="pr-name">Bench Press</div><div class="pr-meta">Set 5 weeks ago</div></div><div><div class="pr-val">95kg</div><div style="font-size:11px;color:var(--green);text-align:right">+2.5kg</div></div></div>
+        <div class="pr-item"><div><div class="pr-name">Deadlift</div><div class="pr-meta">Set 2 weeks ago</div></div><div><div class="pr-val">155kg</div><div style="font-size:11px;color:var(--green);text-align:right">+10kg</div></div></div>
+        <div class="pr-item"><div><div class="pr-name">Overhead Press</div><div class="pr-meta">Set 4 weeks ago</div></div><div><div class="pr-val">72.5kg</div><div style="font-size:11px;color:var(--green);text-align:right">+2.5kg</div></div></div>
+      </div>
+    </div>
+    <div class="chart-card"><div class="chart-title">Session completion</div><div class="chart-sub">Days trained this month</div><div id="heatmap" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px"></div></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!--  PAGE: Suggestions                      -->
+<!-- ════════════════════════════════════════ -->
+<div class="page" id="page-suggestions">
+  <div class="header">
+    <div class="header-title">Smart insights</div>
+    <div class="header-sub" id="sugHeader">Personalised for this week</div>
+  </div>
+  <div class="scroll-body">
+    <div class="suggestion-card" style="border-color:var(--primary)">
+      <div class="sug-header"><div class="sug-icon" style="background:var(--primary-dim)">📈</div><div><div class="sug-title">Add 2.5kg to your squat</div><div class="sug-tag pill pill-primary" style="margin-top:4px">Progressive overload</div></div></div>
+      <div class="sug-body">You've hit all 4×6 reps at 100kg for 3 consecutive sessions. Your data shows you're ready to progress. Adding 2.5kg keeps you within the 5–10% weekly load increase threshold for safe strength gains.</div>
+      <div class="sug-action"><button class="btn btn-sm btn-primary" onclick="guardedNotif('✅','Plan updated','Squat weight increased to 102.5kg next session.')">Apply to plan</button><button class="btn btn-sm btn-outline">Learn more</button></div>
+    </div>
+    <div class="suggestion-card">
+      <div class="sug-header"><div class="sug-icon" style="background:var(--amber-dim)">😴</div><div><div class="sug-title">Recovery may be limited</div><div class="sug-tag pill pill-amber" style="margin-top:4px">Recovery</div></div></div>
+      <div class="sug-body">You trained 4 days in a row last week with no rest days. Your session RPE scores averaged 8.4 — above your usual 7.2. Consider extending Thursday's rest or adding light mobility work to prevent overtraining.</div>
+      <div class="sug-action"><button class="btn btn-sm btn-outline">Add mobility session</button></div>
+    </div>
+    <div class="suggestion-card">
+      <div class="sug-header"><div class="sug-icon" style="background:var(--green-dim)">🍗</div><div><div class="sug-title">Protein target not being met</div><div class="sug-tag pill pill-green" style="margin-top:4px">Nutrition</div></div></div>
+      <div class="sug-body">Your average daily protein intake this week is 142g — below your 165g target based on your body weight and hypertrophy goal. Consider adding a protein shake post-session or increasing chicken/fish portions.</div>
+      <div class="sug-action"><button class="btn btn-sm btn-outline" onclick="navTo('nutrition')">View nutrition</button></div>
+    </div>
+    <div class="suggestion-card">
+      <div class="sug-header"><div class="sug-icon" style="background:var(--accent-dim)">🏃</div><div><div class="sug-title">Cardio is improving recovery</div><div class="sug-tag pill pill-accent" style="margin-top:4px">Positive trend</div></div></div>
+      <div class="sug-body">Since adding Saturday HIIT sessions 4 weeks ago, your average session RPE dropped from 8.1 to 7.3 on compound lift days. Cardiovascular fitness is supporting your strength work — keep it up.</div>
+    </div>
+    <div class="suggestion-card">
+      <div class="sug-header"><div class="sug-icon" style="background:var(--red-dim)">⚠️</div><div><div class="sug-title">Posterior chain imbalance detected</div><div class="sug-tag pill pill-red" style="margin-top:4px">Form & balance</div></div></div>
+      <div class="sug-body">Your quad volume is 2.4× your hamstring volume over the past 4 weeks. This ratio increases injury risk long-term. Consider swapping one leg press session for Romanian deadlifts or Nordic curls.</div>
+      <div class="sug-action"><button class="btn btn-sm btn-outline">See suggested exercises</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!--  PAGE: Nutrition                        -->
+<!-- ════════════════════════════════════════ -->
+<div class="page" id="page-nutrition">
+  <div class="header">
+    <div class="header-title">Nutrition</div>
+    <div class="header-sub">Thursday · Training day</div>
+  </div>
+  <div class="scroll-body">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px">
+        <div style="flex:1">
+          <div style="font-size:28px;font-weight:800;line-height:1">1,640</div>
+          <div style="font-size:13px;color:var(--text2);margin-top:2px">of 2,800 kcal</div>
+          <div class="progress-bar" style="margin-top:8px"><div class="progress-fill amber" style="width:59%"></div></div>
+          <div style="font-size:11px;color:var(--text2);margin-top:4px">1,160 kcal remaining</div>
+        </div>
+        <div style="width:110px;height:110px;flex-shrink:0"><canvas id="macroChart"></canvas></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px">
+        <div style="text-align:center;background:var(--card2);border-radius:10px;padding:10px"><div style="font-size:16px;font-weight:800;color:#ff6b6b">142g</div><div style="font-size:10px;color:var(--text2);margin-top:2px">Protein <span style="color:var(--text3)">/ 165g</span></div><div class="progress-bar" style="margin-top:6px"><div class="progress-fill" style="width:86%;background:#ff6b6b"></div></div></div>
+        <div style="text-align:center;background:var(--card2);border-radius:10px;padding:10px"><div style="font-size:16px;font-weight:800;color:var(--amber)">195g</div><div style="font-size:10px;color:var(--text2);margin-top:2px">Carbs <span style="color:var(--text3)">/ 310g</span></div><div class="progress-bar" style="margin-top:6px"><div class="progress-fill amber" style="width:63%"></div></div></div>
+        <div style="text-align:center;background:var(--card2);border-radius:10px;padding:10px"><div style="font-size:16px;font-weight:800;color:var(--green)">52g</div><div style="font-size:10px;color:var(--text2);margin-top:2px">Fat <span style="color:var(--text3)">/ 90g</span></div><div class="progress-bar" style="margin-top:6px"><div class="progress-fill green" style="width:58%"></div></div></div>
+      </div>
+    </div>
+
+    <div style="background:var(--primary-dim2);border:0.5px solid var(--primary);border-radius:12px;padding:14px 16px;margin-bottom:12px;display:flex;gap:12px;align-items:flex-start">
+      <div style="font-size:20px">💡</div>
+      <div><div style="font-size:13px;font-weight:700;margin-bottom:3px">Training day boost</div><div style="font-size:12px;color:var(--text2);line-height:1.5">You have a session today — add 40g of fast carbs (banana or rice cake) 30 min before training to maximise performance.</div></div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="card-title" style="margin-bottom:0">Today's meals</div>
+        <button class="btn btn-sm btn-primary" onclick="guardedAction('nutrition','addMealSheet')">+ Add</button>
+      </div>
+      <div class="meal-list">
+        <div class="meal-item"><div><div class="meal-name">Overnight oats + banana</div><div class="meal-time">Breakfast · 07:30</div></div><div style="text-align:right"><div class="meal-cal">480 kcal</div><div style="font-size:11px;color:var(--text2)">P: 22g C: 78g F: 8g</div></div></div>
+        <div class="meal-item"><div><div class="meal-name">Chicken rice bowl</div><div class="meal-time">Lunch · 12:15</div></div><div style="text-align:right"><div class="meal-cal">680 kcal</div><div style="font-size:11px;color:var(--text2)">P: 58g C: 72g F: 18g</div></div></div>
+        <div class="meal-item"><div><div class="meal-name">Greek yoghurt + berries</div><div class="meal-time">Snack · 15:00</div></div><div style="text-align:right"><div class="meal-cal">210 kcal</div><div style="font-size:11px;color:var(--text2)">P: 24g C: 28g F: 2g</div></div></div>
+        <div class="meal-item" style="opacity:0.45"><div><div class="meal-name">Post-workout meal</div><div class="meal-time">Dinner · Not logged yet</div></div><div style="text-align:right"><div style="font-size:13px;color:var(--text3)">— kcal</div></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div><div class="card-title" style="margin-bottom:2px">Hydration</div><div style="font-size:13px;color:var(--text2)" id="waterLabel">5 of 8 glasses · <b style="color:var(--primary)">1.25L</b></div></div>
+      </div>
+      <div class="water-tracker" id="waterTracker"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!--  PAGE: Profile                          -->
+<!-- ════════════════════════════════════════ -->
+<div class="page" id="page-profile">
+  <div class="header">
+    <div class="header-title">Profile</div>
+    <button class="btn btn-sm btn-outline" id="profileSaveBtn" onclick="saveProfile()">Save</button>
+  </div>
+
+  <!-- Guest state -->
+  <div id="guestProfileContent" style="display:none;padding:40px 28px;text-align:center">
+    <div style="font-size:56px;margin-bottom:16px">🏋️</div>
+    <div style="font-size:20px;font-weight:800;margin-bottom:8px">You're browsing as a guest</div>
+    <div style="font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:28px">Create a free account to personalise your profile, save your sessions, and unlock your full training data.</div>
+    <button class="btn btn-primary btn-block" onclick="showOnboarding()">Create free account</button>
+    <button class="btn btn-outline btn-block" style="margin-top:10px" onclick="openSheet('loginSheet')">Log in</button>
+  </div>
+
+  <!-- Member state -->
+  <div id="memberProfileContent">
+    <div class="profile-hero">
+      <div class="avatar" id="profileAvatar">AJ</div>
+      <div class="profile-name" id="profileName">Alex Johnson</div>
+      <div class="profile-since">Member since January 2025 · 68 sessions logged</div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center" id="profilePills">
+        <div class="pill pill-primary">Strength</div>
+        <div class="pill pill-green">12-week plan</div>
+        <div class="pill pill-accent">4 days/week</div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-title">Personal details</div>
+      <div class="settings-card">
+        <div class="settings-row"><div class="settings-row-icon" style="background:var(--primary-dim)">👤</div><div class="settings-row-label">Name</div><div class="settings-row-value" id="pName">Alex Johnson</div><div class="settings-row-arrow">›</div></div>
+        <div class="settings-row"><div class="settings-row-icon" style="background:var(--accent-dim)">🎂</div><div class="settings-row-label">Age</div><div class="settings-row-value" id="pAge">28</div><div class="settings-row-arrow">›</div></div>
+        <div class="settings-row"><div class="settings-row-icon" style="background:var(--green-dim)">⚖️</div><div class="settings-row-label">Weight</div><div class="settings-row-value" id="pWeight">82kg</div><div class="settings-row-arrow">›</div></div>
+        <div class="settings-row"><div class="settings-row-icon" style="background:var(--amber-dim)">📏</div><div class="settings-row-label">Height</div><div class="settings-row-value" id="pHeight">178cm</div><div class="settings-row-arrow">›</div></div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-title">Training preferences</div>
+      <div class="settings-card">
+        <div class="settings-row"><div class="settings-row-icon" style="background:var(--primary-dim)">🎯</div><div class="settings-row-label">Primary goal</div><div class="settings-row-value" id="pGoal">Hypertrophy</div><div class="settings-row-arrow">›</div></div>
+        <div class="settings-row"><div class="settings-row-icon" style="background:var(--accent-dim)">📅</div><div class="settings-row-label">Days per week</div><div class="settings-row-value" id="pDays">4</div><div class="settings-row-arrow">›</div></div>
+        <div class="settings-row"><div class="settings-row-icon" style="background:var(--green-dim)">⏱️</div><div class="settings-row-label">Session length</div><div class="settings-row-value" id="pSessionLen">60–75 min</div><div class="settings-row-arrow">›</div></div>
+        <div class="settings-row"><div class="settings-row-icon" style="background:var(--amber-dim)">🏋️</div><div class="settings-row-label">Equipment</div><div class="settings-row-value" id="pEquip">Full gym</div><div class="settings-row-arrow">›</div></div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-title">Notifications</div>
+      <div class="settings-card">
+        <div class="settings-row"><div class="settings-row-icon" style="background:var(--primary-dim)">🔔</div><div class="settings-row-label">Session reminders</div><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-thumb"></div></div></div>
+        <div class="settings-row"><div class="settings-row-icon" style="background:var(--green-dim)">🍽️</div><div class="settings-row-label">Meal reminders</div><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-thumb"></div></div></div>
+        <div class="settings-row"><div class="settings-row-icon" style="background:var(--accent-dim)">🏆</div><div class="settings-row-label">PR & milestone alerts</div><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-thumb"></div></div></div>
+        <div class="settings-row"><div class="settings-row-icon" style="background:var(--amber-dim)">💡</div><div class="settings-row-label">Weekly insight digest</div><div class="toggle" onclick="this.classList.toggle('on')"><div class="toggle-thumb"></div></div></div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-title">Units & display</div>
+      <div class="settings-card">
+        <div class="settings-row"><div class="settings-row-icon" style="background:var(--primary-dim)">⚖️</div><div class="settings-row-label">Weight unit</div><div class="settings-row-value">kg</div><div class="settings-row-arrow">›</div></div>
+        <div class="settings-row"><div class="settings-row-icon" style="background:var(--accent-dim)">🌙</div><div class="settings-row-label">Dark mode</div><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-thumb"></div></div></div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-card">
+        <div class="settings-row" onclick="logOut()"><div class="settings-row-icon" style="background:var(--red-dim)">🚪</div><div class="settings-row-label" style="color:var(--red)">Log out</div><div class="settings-row-arrow">›</div></div>
+      </div>
+    </div>
+    <div style="height:20px"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!--  Bottom navigation                      -->
+<!-- ════════════════════════════════════════ -->
+<nav class="bottom-nav" id="bottomNav" style="display:none">
+  <div class="nav-item active" id="nav-home" onclick="navTo('home')">
+    <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg></div>
+    <div class="nav-label">Home</div>
+  </div>
+  <div class="nav-item" id="nav-plan" onclick="navTo('plan')">
+    <div class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg></div>
+    <div class="nav-label">Plan</div>
+  </div>
+  <div class="nav-item" id="nav-track" onclick="navTo('track')">
+    <div class="nav-icon" style="background:var(--primary);border-radius:14px;width:44px;height:44px"><svg viewBox="0 0 24 24" style="stroke:#fff"><path d="M12 5v14M5 12l7-7 7 7"/></svg></div>
+    <div class="nav-label">Track</div>
+  </div>
+  <div class="nav-item" id="nav-analytics" onclick="navTo('analytics')">
+    <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 4-6"/></svg></div>
+    <div class="nav-label">Analytics</div>
+  </div>
+  <div class="nav-item" id="nav-profile" onclick="navTo('profile')">
+    <div class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+    <div class="nav-label">Profile</div>
+  </div>
+</nav>
+
+<!-- ── Guest ribbon (above bottom nav) ── -->
+<div id="guestRibbon" style="display:none">
+  <span style="font-size:13px;color:var(--text);font-weight:500">Browsing as guest — data won't be saved</span>
+  <button class="btn btn-sm" style="background:var(--primary);color:#fff;border:none;padding:7px 14px" onclick="showOnboarding()">Sign up free</button>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!--  Sheets                                 -->
+<!-- ════════════════════════════════════════ -->
+
+<!-- Login sheet -->
+<div class="sheet-overlay" id="loginSheet" onclick="if(event.target===this)closeSheet('loginSheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Welcome back</div>
+    <div class="input-group"><label class="input-label">Email</label><input class="input" type="email" placeholder="you@example.com" id="loginEmail"></div>
+    <div class="input-group"><label class="input-label">Password</label><input class="input" type="password" placeholder="••••••••" id="loginPass"></div>
+    <button class="btn btn-primary btn-block" onclick="doLogin()">Log in</button>
+    <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3);cursor:pointer">Forgot your password?</div>
+    <div class="divider"></div>
+    <div style="text-align:center;font-size:13px;color:var(--text2)">Don't have an account? <span style="color:var(--primary);font-weight:600;cursor:pointer" onclick="closeSheet('loginSheet');showOnboarding()">Sign up free</span></div>
+  </div>
+</div>
+
+<!-- Member prompt sheet -->
+<div class="sheet-overlay" id="memberPromptSheet" onclick="if(event.target===this)closeSheet('memberPromptSheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div style="text-align:center;padding:8px 0 20px">
+      <div style="font-size:48px;margin-bottom:12px">🔒</div>
+      <div class="sheet-title" style="margin-bottom:8px">Member feature</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.55;margin-bottom:20px" id="memberPromptMsg">Create a free account to unlock this feature and save your progress.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+      <div class="member-benefit"><div>💾</div><span>Save every session and review your history</span></div>
+      <div class="member-benefit"><div>📊</div><span>Real analytics built from your own data</span></div>
+      <div class="member-benefit"><div>🎯</div><span>Personalised goals and adaptive plans</span></div>
+      <div class="member-benefit"><div>🥗</div><span>Nutrition logging that adapts to training days</span></div>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="closeSheet('memberPromptSheet');showOnboarding()">Create free account</button>
+    <button class="btn btn-outline btn-block" style="margin-top:10px" onclick="closeSheet('memberPromptSheet');openSheet('loginSheet')">Log in</button>
+  </div>
+</div>
+
+<!-- Weekly check-in sheet -->
+<div class="sheet-overlay" id="checkinSheet" onclick="if(event.target===this)closeSheet('checkinSheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+      <div style="font-size:28px">📋</div>
+      <div>
+        <div class="sheet-title" style="margin-bottom:2px">Weekly check-in</div>
+        <div style="font-size:13px;color:var(--text2)">Quick update to keep your plan on track</div>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <div class="input-group">
+      <label class="input-label">Current weight (kg)</label>
+      <input class="input" type="number" id="ciWeight" placeholder="82" step="0.5">
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">Sessions you can fit in this week</label>
+      <div class="day-picker" id="ciDayPicker">
+        <div class="day-chip" onclick="ciSelectDays(this,1)">1</div>
+        <div class="day-chip" onclick="ciSelectDays(this,2)">2</div>
+        <div class="day-chip" onclick="ciSelectDays(this,3)">3</div>
+        <div class="day-chip selected" onclick="ciSelectDays(this,4)">4</div>
+        <div class="day-chip" onclick="ciSelectDays(this,5)">5</div>
+        <div class="day-chip" onclick="ciSelectDays(this,6)">6</div>
+        <div class="day-chip" onclick="ciSelectDays(this,7)">7</div>
+      </div>
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">How's your energy and recovery?</label>
+      <div class="energy-picker" id="energyPicker">
+        <div class="energy-chip" onclick="ciSelectEnergy(this,1)" title="Exhausted">😴</div>
+        <div class="energy-chip" onclick="ciSelectEnergy(this,2)" title="Tired">😔</div>
+        <div class="energy-chip selected" onclick="ciSelectEnergy(this,3)" title="Okay">😐</div>
+        <div class="energy-chip" onclick="ciSelectEnergy(this,4)" title="Good">😊</div>
+        <div class="energy-chip" onclick="ciSelectEnergy(this,5)" title="Excellent">⚡</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px;padding:0 4px">
+        <span>Exhausted</span><span>Excellent</span>
+      </div>
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">Anything to note? <span style="font-weight:400;color:var(--text3)">(optional)</span></label>
+      <textarea class="textarea" id="ciNotes" placeholder="Injuries, life events, changes to your schedule…" style="min-height:60px"></textarea>
+    </div>
+
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-outline" style="flex:1" onclick="closeSheet('checkinSheet')">Skip this week</button>
+      <button class="btn btn-primary" style="flex:2" onclick="submitCheckin()">Save check-in ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- Plan edit sheet -->
+<div class="sheet-overlay" id="planSheet" onclick="if(event.target===this)closeSheet('planSheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Edit your plan</div>
+    <div class="input-group"><label class="input-label">Programme name</label><input class="input" value="12-week strength programme"></div>
+    <div class="input-group"><label class="input-label">Primary goal</label>
+      <select class="select"><option selected>Build muscle (hypertrophy)</option><option>Increase strength</option><option>Lose body fat</option><option>Improve endurance</option></select>
+    </div>
+    <div class="input-group"><label class="input-label">Training days per week</label>
+      <select class="select"><option>3</option><option selected>4</option><option>5</option><option>6</option></select>
+    </div>
+    <div class="input-group"><label class="input-label">Programme duration (weeks)</label>
+      <select class="select"><option>4</option><option>8</option><option selected>12</option><option>16</option></select>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="closeSheet('planSheet');showNotif('✅','Plan saved','Your programme has been updated.')">Save plan</button>
+  </div>
+</div>
+
+<!-- Day detail sheet -->
+<div class="sheet-overlay" id="daySheet" onclick="if(event.target===this)closeSheet('daySheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Monday — Strength A</div>
+    <div class="pill pill-primary" style="margin-bottom:16px">Strength · 60 min</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+      <div class="card" style="margin-bottom:0;padding:12px 14px"><div style="font-size:14px;font-weight:700">Barbell Squat</div><div style="font-size:12px;color:var(--text2);margin-top:3px">4 sets × 6 reps · 100kg · Rest 3min</div></div>
+      <div class="card" style="margin-bottom:0;padding:12px 14px"><div style="font-size:14px;font-weight:700">Bench Press</div><div style="font-size:12px;color:var(--text2);margin-top:3px">4 sets × 6 reps · 80kg · Rest 3min</div></div>
+      <div class="card" style="margin-bottom:0;padding:12px 14px"><div style="font-size:14px;font-weight:700">Deadlift</div><div style="font-size:12px;color:var(--text2);margin-top:3px">3 sets × 5 reps · 130kg · Rest 4min</div></div>
+      <div class="card" style="margin-bottom:0;padding:12px 14px"><div style="font-size:14px;font-weight:700">Pull-up</div><div style="font-size:12px;color:var(--text2);margin-top:3px">3 sets × 8 reps · Bodyweight · Rest 2min</div></div>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="closeSheet('daySheet');navTo('track')">Start this session →</button>
+  </div>
+</div>
+
+<!-- Add exercise sheet -->
+<div class="sheet-overlay" id="addExSheet" onclick="if(event.target===this)closeSheet('addExSheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Add exercise</div>
+    <div class="input-group"><label class="input-label">Exercise name</label><input class="input" placeholder="e.g. Romanian Deadlift" id="newExName"></div>
+    <div class="input-group"><label class="input-label">Training type</label></div>
+    <div class="type-grid">
+      <div class="type-chip selected" onclick="selectType(this)"><span class="type-emoji">💪</span>Strength</div>
+      <div class="type-chip" onclick="selectType(this)"><span class="type-emoji">🏋️</span>Hypertrophy</div>
+      <div class="type-chip" onclick="selectType(this)"><span class="type-emoji">🏃</span>Endurance</div>
+      <div class="type-chip" onclick="selectType(this)"><span class="type-emoji">⚡</span>Power</div>
+      <div class="type-chip" onclick="selectType(this)"><span class="type-emoji">🔥</span>HIIT</div>
+      <div class="type-chip" onclick="selectType(this)"><span class="type-emoji">🧘</span>Mobility</div>
+      <div class="type-chip" onclick="selectType(this)"><span class="type-emoji">❤️</span>Cardio</div>
+      <div class="type-chip" onclick="selectType(this)"><span class="type-emoji">♻️</span>Recovery</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div class="input-group" style="margin-bottom:0"><label class="input-label">Sets</label><input class="input" type="number" value="3" id="newExSets" min="1" max="10"></div>
+      <div class="input-group" style="margin-bottom:0"><label class="input-label">Reps</label><input class="input" type="number" value="10" id="newExReps" min="1" max="100"></div>
+    </div>
+    <div class="input-group"><label class="input-label">Starting weight (kg)</label><input class="input" type="number" placeholder="0" id="newExWeight"></div>
+    <button class="btn btn-primary btn-block" onclick="addExercise()">Add to session</button>
+  </div>
+</div>
+
+<!-- Add meal sheet -->
+<div class="sheet-overlay" id="addMealSheet" onclick="if(event.target===this)closeSheet('addMealSheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Log a meal</div>
+    <div class="input-group"><label class="input-label">Meal name</label><input class="input" placeholder="e.g. Salmon with rice"></div>
+    <div class="input-group"><label class="input-label">Meal type</label>
+      <select class="select"><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snack</option><option>Pre-workout</option><option>Post-workout</option></select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div class="input-group" style="margin-bottom:0"><label class="input-label">Calories</label><input class="input" type="number" placeholder="0"></div>
+      <div class="input-group" style="margin-bottom:0"><label class="input-label">Protein (g)</label><input class="input" type="number" placeholder="0"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div class="input-group" style="margin-bottom:0"><label class="input-label">Carbs (g)</label><input class="input" type="number" placeholder="0"></div>
+      <div class="input-group" style="margin-bottom:0"><label class="input-label">Fat (g)</label><input class="input" type="number" placeholder="0"></div>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="closeSheet('addMealSheet');showNotif('🍽️','Meal logged','Your meal has been added to today\'s nutrition.')">Log meal</button>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
