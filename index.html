@@ -252,45 +252,115 @@
   <div class="header">
     <div>
       <div class="header-title">My plan</div>
-      <div class="header-sub">12-week strength programme</div>
+      <div class="header-sub" id="planPageSub">No active plan</div>
     </div>
-    <button class="btn btn-sm btn-outline" onclick="guardedAction('plan','planSheet')">Edit</button>
+    <button class="btn btn-sm btn-primary" onclick="openPlanBuilder(null)">+ New plan</button>
   </div>
 
-  <div class="scroll-body">
-    <div class="goal-hero">
-      <div class="goal-hero-label">Primary goal</div>
-      <div class="goal-hero-title">Build muscle & increase strength</div>
-      <div class="goal-progress-label"><span>Week 12 of 12</span><span>100%</span></div>
-      <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
-      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
-        <div class="pill pill-primary">Hypertrophy</div>
-        <div class="pill pill-green">Strength</div>
-        <div class="pill pill-accent">4 days/week</div>
-      </div>
-    </div>
+  <!-- My plans list (shown when plans exist) -->
+  <div id="myPlansList" style="display:none;padding:12px 20px 0">
+    <div class="card-title" style="margin-bottom:8px">My plans</div>
+    <div id="myPlansCards"></div>
+  </div>
 
-    <div class="card">
-      <div class="card-title">Targets</div>
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:var(--text2)">Squat 1RM</span><span><b>120kg</b> <span style="color:var(--text3)">/ 140kg goal</span></span></div><div class="progress-bar"><div class="progress-fill" style="width:86%"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:var(--text2)">Bench Press 1RM</span><span><b>95kg</b> <span style="color:var(--text3)">/ 110kg goal</span></span></div><div class="progress-bar"><div class="progress-fill accent" style="width:86%"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:var(--text2)">Deadlift 1RM</span><span><b>155kg</b> <span style="color:var(--text3)">/ 180kg goal</span></span></div><div class="progress-bar"><div class="progress-fill green" style="width:86%"></div></div></div>
-        <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:var(--text2)">Body weight</span><span><b>82kg</b> <span style="color:var(--text3)">/ 85kg goal</span></span></div><div class="progress-bar"><div class="progress-fill amber" style="width:96%"></div></div></div>
-      </div>
-    </div>
+  <!-- Empty state (shown when no plans) -->
+  <div id="planEmptyState" style="padding:40px 28px;text-align:center">
+    <div style="font-size:56px;margin-bottom:16px">📋</div>
+    <div style="font-size:20px;font-weight:800;margin-bottom:8px">No plan yet</div>
+    <div style="font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:28px">Build your first training plan — choose from a template or create your own from scratch.</div>
+    <button class="btn btn-primary btn-block" onclick="openPlanBuilder(null)">Create your first plan</button>
+  </div>
 
-    <div class="card-title" style="padding:0 0 8px 0">Weekly schedule</div>
-    <div class="week-plan" style="margin:0">
-      <div class="week-day" onclick="openSheet('daySheet')"><div class="day-num">MON</div><div class="day-info"><div class="day-name">Strength A</div><div class="day-type">Squat · Bench · Deadlift · Pull-up</div></div><div class="pill pill-primary" style="font-size:11px">Strength</div></div>
-      <div class="week-day rest"><div class="day-num">TUE</div><div class="day-info"><div class="day-name">Rest / Cardio</div><div class="day-type">Active recovery or 20min walk</div></div><div class="pill" style="background:var(--card2);color:var(--text3);font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600">Rest</div></div>
-      <div class="week-day" onclick="openSheet('daySheet')"><div class="day-num">WED</div><div class="day-info"><div class="day-name">Hypertrophy B</div><div class="day-type">OHP · Row · Dips · Curls · Triceps</div></div><div class="pill pill-accent" style="font-size:11px">Hypertrophy</div></div>
-      <div class="week-day rest"><div class="day-num">THU</div><div class="day-info"><div class="day-name">Rest</div><div class="day-type">Today — recovery day</div></div><div class="pill" style="background:var(--card2);color:var(--text3);font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600">Rest</div></div>
-      <div class="week-day" onclick="openSheet('daySheet')"><div class="day-num">FRI</div><div class="day-info"><div class="day-name">Strength C</div><div class="day-type">Squat · Romanian DL · Leg press · Calf</div></div><div class="pill pill-green" style="font-size:11px">Endurance</div></div>
-      <div class="week-day rest"><div class="day-num">SAT</div><div class="day-info"><div class="day-name">HIIT / Cardio</div><div class="day-type">30min sprint intervals or rowing</div></div><div class="pill pill-amber" style="font-size:11px">HIIT</div></div>
-      <div class="week-day rest"><div class="day-num">SUN</div><div class="day-info"><div class="day-name">Full rest</div><div class="day-type">Sleep, stretch, recover</div></div><div class="pill" style="background:var(--card2);color:var(--text3);font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600">Rest</div></div>
+  <!-- Active plan overview (shown when a plan is active) -->
+  <div id="activePlanView" style="display:none">
+    <div class="scroll-body">
+      <div class="goal-hero">
+        <div class="goal-hero-label" id="apGoalLabel">Primary goal</div>
+        <div class="goal-hero-title" id="apTitle">—</div>
+        <div class="goal-progress-label"><span id="apWeekOf">Week 1</span><span id="apPct">0%</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="apBar" style="width:0%"></div></div>
+        <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap" id="apPills"></div>
+      </div>
+
+      <div class="card-title" style="padding:0 0 8px">Weekly schedule</div>
+      <div class="week-plan" style="margin:0" id="apSchedule"></div>
     </div>
   </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!--  PAGE: Plan Builder                     -->
+<!-- ════════════════════════════════════════ -->
+<div class="page" id="page-planbuilder">
+
+  <!-- Header -->
+  <div class="pb-header">
+    <button class="pb-back-btn" onclick="pbGoBack()">← Back</button>
+    <div class="pb-header-title">Plan Builder</div>
+    <button class="pb-save-btn" onclick="savePlan()" id="pbSaveBtn" style="visibility:hidden">Save</button>
+  </div>
+
+  <!-- Step indicator -->
+  <div class="pb-step-indicator">
+    <div class="pb-step-dot active" id="pbDot1">1</div>
+    <div class="pb-step-line" id="pbLine1"></div>
+    <div class="pb-step-dot" id="pbDot2">2</div>
+    <div class="pb-step-line" id="pbLine2"></div>
+    <div class="pb-step-dot" id="pbDot3">3</div>
+  </div>
+
+  <!-- ── Step 1: Choose template ── -->
+  <div class="pb-step active" id="pb-step-1">
+    <div class="scroll-body">
+      <div class="pb-step-title">Choose a starting point</div>
+      <div class="pb-step-sub">Templates are fully editable — you can change every exercise, weight and rep target after selecting.</div>
+      <div id="pbTemplateList"></div>
+      <button class="btn btn-outline btn-block" style="margin-top:4px" onclick="pbSelectTemplate(null)">🗒️ &nbsp;Start from scratch</button>
+    </div>
+  </div>
+
+  <!-- ── Step 2: Plan details ── -->
+  <div class="pb-step" id="pb-step-2">
+    <div class="scroll-body">
+      <div class="pb-step-title">Plan details</div>
+      <div class="pb-step-sub">Give your plan a name and set your goals.</div>
+      <div class="input-group">
+        <label class="input-label">Plan name</label>
+        <input class="input" type="text" id="pbName" placeholder="e.g. My 12-week strength plan">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Plan duration</label>
+        <div class="pb-chip-row" id="pbWeekPicker">
+          <div class="pb-chip" onclick="pbSelectChip(this,'pbWeekPicker',4)">4 weeks</div>
+          <div class="pb-chip" onclick="pbSelectChip(this,'pbWeekPicker',8)">8 weeks</div>
+          <div class="pb-chip selected" onclick="pbSelectChip(this,'pbWeekPicker',12)" data-val="12">12 weeks</div>
+          <div class="pb-chip" onclick="pbSelectChip(this,'pbWeekPicker',16)">16 weeks</div>
+        </div>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Primary goal</label>
+        <div class="type-grid">
+          <div class="type-chip selected" data-pb-goal="hypertrophy" onclick="pbSelectGoal(this)"><span class="type-emoji">💪</span>Build muscle</div>
+          <div class="type-chip" data-pb-goal="strength" onclick="pbSelectGoal(this)"><span class="type-emoji">🏋️</span>Strength</div>
+          <div class="type-chip" data-pb-goal="fat_loss" onclick="pbSelectGoal(this)"><span class="type-emoji">🔥</span>Fat loss</div>
+          <div class="type-chip" data-pb-goal="endurance" onclick="pbSelectGoal(this)"><span class="type-emoji">🏃</span>Endurance</div>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="pbNextStep()">Next: Build sessions →</button>
+    </div>
+  </div>
+
+  <!-- ── Step 3: Sessions ── -->
+  <div class="pb-step" id="pb-step-3">
+    <div class="scroll-body" style="padding-bottom:24px">
+      <div class="pb-step-title">Build your sessions</div>
+      <div class="pb-step-sub">Assign each session to one or more days, then add your exercises.</div>
+      <div id="pbSessionList"></div>
+      <button class="btn btn-outline btn-block" style="margin-bottom:16px" onclick="pbAddSession()">+ Add session</button>
+      <button class="btn btn-primary btn-block" onclick="savePlan()">Save plan ✓</button>
+    </div>
+  </div>
+
 </div>
 
 <!-- ════════════════════════════════════════ -->
@@ -839,6 +909,16 @@
   </div>
 </div>
 
+<!-- Exercise picker sheet -->
+<div class="sheet-overlay" id="exPickerSheet" onclick="if(event.target===this)closeSheet('exPickerSheet')">
+  <div class="sheet" style="max-height:80vh">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Add exercise</div>
+    <div class="ex-picker-cats" id="exPickerCats"></div>
+    <div class="ex-picker-list" id="exPickerList"></div>
+  </div>
+</div>
+
 <!-- Add meal sheet -->
 <div class="sheet-overlay" id="addMealSheet" onclick="if(event.target===this)closeSheet('addMealSheet')">
   <div class="sheet">
@@ -860,6 +940,6 @@
   </div>
 </div>
 
-<script src="js/app.js?v=3"></script>
+<script src="js/app.js?v=4"></script>
 </body>
 </html>

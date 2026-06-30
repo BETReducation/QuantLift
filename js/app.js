@@ -340,6 +340,7 @@ function navTo(page) {
   if (page === 'analytics') setTimeout(renderCharts,    100);
   if (page === 'nutrition') setTimeout(renderMacroChart, 100);
   if (page === 'track')     renderExercises();
+  if (page === 'plan')      renderPlanPage();
   window.scrollTo(0, 0);
 }
 
@@ -644,9 +645,487 @@ function setPeriod(el, period) {
 }
 
 /* ── Init ── */
+loadPlans();
 updateRestDisplay();
 renderWater();
 restoreSession();
+
+/* ══════════════════════════════════════════ */
+/*  Plan Builder — Data                      */
+/* ══════════════════════════════════════════ */
+var EXERCISE_LIBRARY = {
+  'Chest':     ['Bench Press','Incline Bench Press','Decline Bench Press','Dumbbell Fly','Cable Fly','Chest Dip','Push-up','Machine Chest Press','Pec Deck'],
+  'Back':      ['Deadlift','Barbell Row','Dumbbell Row','Pull-up','Chin-up','Lat Pulldown','Seated Cable Row','Face Pull','T-Bar Row','Hyperextension','Romanian Deadlift'],
+  'Legs':      ['Barbell Squat','Leg Press','Romanian Deadlift','Leg Extension','Leg Curl','Bulgarian Split Squat','Lunges','Calf Raise','Hip Thrust','Hack Squat','Sumo Squat'],
+  'Shoulders': ['Overhead Press','Dumbbell Lateral Raise','Front Raise','Rear Delt Fly','Arnold Press','Upright Row','Shrugs','Cable Lateral Raise'],
+  'Arms':      ['Barbell Curl','Dumbbell Curl','Hammer Curl','Preacher Curl','Cable Curl','Tricep Pushdown','Skull Crusher','Overhead Tricep Extension','Close-grip Bench Press','Dips'],
+  'Core':      ['Plank','Crunch','Leg Raise','Russian Twist','Ab Wheel Rollout','Cable Crunch','Hanging Knee Raise','Side Plank','Mountain Climbers'],
+  'Cardio':    ['Treadmill Run','Cycling','Rowing Machine','Elliptical','Stair Climber','Jump Rope','Sprint Intervals','Swimming']
+};
+
+var PLAN_TEMPLATES = [
+  {
+    id: 'ppl', name: 'Push / Pull / Legs', emoji: '💪', tag: 'Hypertrophy · 6 days/week',
+    description: '6-day programme alternating push, pull and leg days. Ideal for intermediate lifters.',
+    weeks: 12, goal: 'hypertrophy',
+    sessions: [
+      { name: 'Push', days: ['MON','THU'], exercises: [
+        { name:'Bench Press',         cat:'Chest',     sets:4, reps:8,  startKg:60,  endReps:12 },
+        { name:'Incline Bench Press', cat:'Chest',     sets:3, reps:10, startKg:50,  endReps:12 },
+        { name:'Overhead Press',      cat:'Shoulders', sets:3, reps:8,  startKg:40,  endReps:10 },
+        { name:'Dumbbell Lateral Raise', cat:'Shoulders', sets:3, reps:12, startKg:10, endReps:15 },
+        { name:'Tricep Pushdown',     cat:'Arms',      sets:3, reps:12, startKg:20,  endReps:15 }
+      ]},
+      { name: 'Pull', days: ['TUE','FRI'], exercises: [
+        { name:'Pull-up',             cat:'Back',  sets:4, reps:8,  startKg:0,  endReps:12 },
+        { name:'Barbell Row',         cat:'Back',  sets:4, reps:8,  startKg:70, endReps:10 },
+        { name:'Lat Pulldown',        cat:'Back',  sets:3, reps:10, startKg:60, endReps:12 },
+        { name:'Face Pull',           cat:'Back',  sets:3, reps:15, startKg:15, endReps:20 },
+        { name:'Barbell Curl',        cat:'Arms',  sets:3, reps:10, startKg:30, endReps:12 }
+      ]},
+      { name: 'Legs', days: ['WED','SAT'], exercises: [
+        { name:'Barbell Squat',       cat:'Legs', sets:4, reps:6,  startKg:80,  endReps:8  },
+        { name:'Romanian Deadlift',   cat:'Legs', sets:3, reps:8,  startKg:70,  endReps:10 },
+        { name:'Leg Press',           cat:'Legs', sets:3, reps:10, startKg:100, endReps:15 },
+        { name:'Leg Curl',            cat:'Legs', sets:3, reps:12, startKg:30,  endReps:15 },
+        { name:'Calf Raise',          cat:'Legs', sets:4, reps:15, startKg:40,  endReps:20 }
+      ]}
+    ]
+  },
+  {
+    id: 'upper_lower', name: 'Upper / Lower Split', emoji: '⚡', tag: 'Strength & Size · 4 days/week',
+    description: '4-day split alternating upper and lower body. Great for beginners and intermediates.',
+    weeks: 8, goal: 'hypertrophy',
+    sessions: [
+      { name: 'Upper', days: ['MON','THU'], exercises: [
+        { name:'Bench Press',    cat:'Chest',     sets:4, reps:6,  startKg:60,  endReps:8  },
+        { name:'Barbell Row',    cat:'Back',      sets:4, reps:6,  startKg:60,  endReps:8  },
+        { name:'Overhead Press', cat:'Shoulders', sets:3, reps:8,  startKg:40,  endReps:10 },
+        { name:'Pull-up',        cat:'Back',      sets:3, reps:6,  startKg:0,   endReps:8  },
+        { name:'Dumbbell Curl',  cat:'Arms',      sets:3, reps:10, startKg:12,  endReps:12 },
+        { name:'Tricep Pushdown',cat:'Arms',      sets:3, reps:10, startKg:20,  endReps:12 }
+      ]},
+      { name: 'Lower', days: ['TUE','FRI'], exercises: [
+        { name:'Barbell Squat',     cat:'Legs', sets:4, reps:6,  startKg:80,  endReps:8  },
+        { name:'Romanian Deadlift', cat:'Legs', sets:4, reps:6,  startKg:70,  endReps:8  },
+        { name:'Leg Press',         cat:'Legs', sets:3, reps:10, startKg:100, endReps:12 },
+        { name:'Leg Curl',          cat:'Legs', sets:3, reps:10, startKg:30,  endReps:12 },
+        { name:'Calf Raise',        cat:'Legs', sets:4, reps:15, startKg:40,  endReps:20 }
+      ]}
+    ]
+  },
+  {
+    id: 'full_body', name: 'Full Body 3×', emoji: '🏋️', tag: 'General Fitness · 3 days/week',
+    description: '3-day full body programme. Perfect for beginners or those with limited time.',
+    weeks: 8, goal: 'fitness',
+    sessions: [
+      { name: 'Full Body', days: ['MON','WED','FRI'], exercises: [
+        { name:'Barbell Squat',  cat:'Legs',      sets:3, reps:8, startKg:60,  endReps:12 },
+        { name:'Bench Press',    cat:'Chest',     sets:3, reps:8, startKg:50,  endReps:12 },
+        { name:'Barbell Row',    cat:'Back',      sets:3, reps:8, startKg:50,  endReps:12 },
+        { name:'Overhead Press', cat:'Shoulders', sets:3, reps:8, startKg:30,  endReps:10 },
+        { name:'Deadlift',       cat:'Back',      sets:2, reps:5, startKg:80,  endReps:6  }
+      ]}
+    ]
+  },
+  {
+    id: 'strength_5x5', name: '5×5 Strength', emoji: '🏆', tag: 'Strength · 3 days/week',
+    description: 'Classic 5 sets of 5 reps on the big compounds. 3 days per week, pure strength focus.',
+    weeks: 12, goal: 'strength',
+    sessions: [
+      { name: 'Session A', days: ['MON','FRI'], exercises: [
+        { name:'Barbell Squat', cat:'Legs',      sets:5, reps:5, startKg:80,  endReps:5 },
+        { name:'Bench Press',   cat:'Chest',     sets:5, reps:5, startKg:60,  endReps:5 },
+        { name:'Barbell Row',   cat:'Back',      sets:5, reps:5, startKg:60,  endReps:5 }
+      ]},
+      { name: 'Session B', days: ['WED'], exercises: [
+        { name:'Barbell Squat',  cat:'Legs',      sets:5, reps:5, startKg:80, endReps:5 },
+        { name:'Overhead Press', cat:'Shoulders', sets:5, reps:5, startKg:40, endReps:5 },
+        { name:'Deadlift',       cat:'Back',      sets:1, reps:5, startKg:100,endReps:5 }
+      ]}
+    ]
+  },
+  {
+    id: 'bro_split', name: 'Classic Bro Split', emoji: '😤', tag: 'Hypertrophy · 5 days/week',
+    description: '5-day split dedicating each session to one muscle group. High volume per muscle.',
+    weeks: 8, goal: 'hypertrophy',
+    sessions: [
+      { name: 'Chest Day', days: ['MON'], exercises: [
+        { name:'Bench Press',        cat:'Chest', sets:4, reps:8,  startKg:60, endReps:12 },
+        { name:'Incline Bench Press',cat:'Chest', sets:4, reps:10, startKg:50, endReps:12 },
+        { name:'Cable Fly',          cat:'Chest', sets:3, reps:12, startKg:10, endReps:15 },
+        { name:'Pec Deck',           cat:'Chest', sets:3, reps:12, startKg:30, endReps:15 }
+      ]},
+      { name: 'Back Day', days: ['TUE'], exercises: [
+        { name:'Deadlift',     cat:'Back', sets:4, reps:5,  startKg:100,endReps:6  },
+        { name:'Barbell Row',  cat:'Back', sets:4, reps:8,  startKg:70, endReps:10 },
+        { name:'Pull-up',      cat:'Back', sets:3, reps:8,  startKg:0,  endReps:10 },
+        { name:'Lat Pulldown', cat:'Back', sets:3, reps:10, startKg:60, endReps:12 }
+      ]},
+      { name: 'Shoulder Day', days: ['WED'], exercises: [
+        { name:'Overhead Press',        cat:'Shoulders', sets:4, reps:8,  startKg:40, endReps:10 },
+        { name:'Dumbbell Lateral Raise',cat:'Shoulders', sets:4, reps:12, startKg:10, endReps:15 },
+        { name:'Front Raise',           cat:'Shoulders', sets:3, reps:12, startKg:8,  endReps:15 },
+        { name:'Rear Delt Fly',         cat:'Shoulders', sets:3, reps:15, startKg:8,  endReps:20 }
+      ]},
+      { name: 'Arms Day', days: ['THU'], exercises: [
+        { name:'Barbell Curl',            cat:'Arms', sets:4, reps:10, startKg:30, endReps:12 },
+        { name:'Hammer Curl',             cat:'Arms', sets:3, reps:10, startKg:12, endReps:12 },
+        { name:'Skull Crusher',           cat:'Arms', sets:4, reps:10, startKg:30, endReps:12 },
+        { name:'Overhead Tricep Extension',cat:'Arms',sets:3, reps:12, startKg:20, endReps:15 }
+      ]},
+      { name: 'Legs Day', days: ['FRI'], exercises: [
+        { name:'Barbell Squat',     cat:'Legs', sets:4, reps:8,  startKg:80, endReps:10 },
+        { name:'Leg Press',         cat:'Legs', sets:4, reps:10, startKg:100,endReps:12 },
+        { name:'Romanian Deadlift', cat:'Legs', sets:3, reps:10, startKg:70, endReps:12 },
+        { name:'Leg Curl',          cat:'Legs', sets:3, reps:12, startKg:30, endReps:15 },
+        { name:'Calf Raise',        cat:'Legs', sets:4, reps:15, startKg:40, endReps:20 }
+      ]}
+    ]
+  }
+];
+
+/* Builder runtime state */
+var savedPlans   = [];
+var activePlanId = null;
+var pbStep       = 1;
+var pbPlan       = { id: null, name: '', weeks: 12, goal: 'hypertrophy', sessions: [] };
+var pbExTarget   = null; /* { sessionIdx } */
+var exPickerCat  = 'Chest';
+
+/* ── Plan page rendering ── */
+function renderPlanPage() {
+  var hasPlan = savedPlans.length > 0;
+  document.getElementById('planEmptyState').style.display  = hasPlan ? 'none' : 'block';
+  document.getElementById('myPlansList').style.display     = hasPlan ? 'block' : 'none';
+  document.getElementById('activePlanView').style.display  = hasPlan ? 'block' : 'none';
+
+  if (!hasPlan) {
+    document.getElementById('planPageSub').textContent = 'No active plan';
+    return;
+  }
+
+  /* My plans cards */
+  var html = savedPlans.map((p, i) => {
+    var isActive = p.id === activePlanId;
+    var t = PLAN_TEMPLATES.find(t => t.id === p.templateId);
+    var emoji = t ? t.emoji : '📋';
+    return `<div class="my-plan-card ${isActive ? 'active-plan' : ''}" onclick="setActivePlan('${p.id}')">
+      <div class="my-plan-card-emoji">${emoji}</div>
+      <div style="flex:1">
+        <div class="my-plan-card-name">${p.name}</div>
+        <div class="my-plan-card-meta">${p.weeks} weeks · ${p.sessions.length} sessions</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        ${isActive ? '<span class="pill pill-green" style="font-size:11px">Active</span>' : ''}
+        <button onclick="event.stopPropagation();editPlan('${p.id}')" style="background:none;border:none;color:var(--primary);font-size:12px;font-weight:600;cursor:pointer;padding:4px 8px">Edit</button>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('myPlansCards').innerHTML = html;
+
+  /* Active plan view */
+  var active = savedPlans.find(p => p.id === activePlanId) || savedPlans[0];
+  if (!active) return;
+  activePlanId = active.id;
+
+  var goalLabels = { hypertrophy:'Build muscle', strength:'Gain strength', fat_loss:'Lose body fat', endurance:'Endurance', fitness:'General fitness' };
+  document.getElementById('planPageSub').textContent = active.name;
+  document.getElementById('apGoalLabel').textContent = 'Primary goal';
+  document.getElementById('apTitle').textContent     = active.name;
+  document.getElementById('apWeekOf').textContent    = 'Week 1 of ' + active.weeks;
+  document.getElementById('apPct').textContent       = '0%';
+  document.getElementById('apBar').style.width       = '0%';
+
+  var goalPillColors = { hypertrophy:'pill-primary', strength:'pill-green', fat_loss:'pill-accent', endurance:'pill-amber', fitness:'pill-primary' };
+  document.getElementById('apPills').innerHTML =
+    `<div class="pill ${goalPillColors[active.goal] || 'pill-primary'}">${goalLabels[active.goal] || active.goal}</div>` +
+    `<div class="pill pill-accent">${active.sessions.reduce((d,s)=>d+s.days.length,0)} days/week</div>` +
+    `<div class="pill pill-green">${active.weeks} weeks</div>`;
+
+  var dayOrder = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+  var dayFull  = { MON:'Monday', TUE:'Tuesday', WED:'Wednesday', THU:'Thursday', FRI:'Friday', SAT:'Saturday', SUN:'Sunday' };
+  var scheduleHtml = '';
+  dayOrder.forEach(day => {
+    var session = active.sessions.find(s => s.days.includes(day));
+    if (session) {
+      var exNames = session.exercises.slice(0,3).map(e=>e.name).join(' · ') + (session.exercises.length>3?' +' + (session.exercises.length-3) + ' more':'');
+      scheduleHtml += `<div class="week-day">
+        <div class="day-num">${day}</div>
+        <div class="day-info"><div class="day-name">${session.name}</div><div class="day-type">${exNames}</div></div>
+        <div class="pill pill-primary" style="font-size:11px">${session.exercises.length} ex</div>
+      </div>`;
+    } else {
+      scheduleHtml += `<div class="week-day rest">
+        <div class="day-num">${day}</div>
+        <div class="day-info"><div class="day-name">Rest</div><div class="day-type">Recovery day</div></div>
+        <div class="pill" style="background:var(--card2);color:var(--text3);font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600">Rest</div>
+      </div>`;
+    }
+  });
+  document.getElementById('apSchedule').innerHTML = scheduleHtml;
+}
+
+function setActivePlan(id) {
+  activePlanId = id;
+  persistPlans();
+  renderPlanPage();
+  showNotif('✅', 'Plan activated', savedPlans.find(p=>p.id===id)?.name + ' is now your active plan.');
+}
+
+function editPlan(id) {
+  var plan = savedPlans.find(p => p.id === id);
+  if (!plan) return;
+  pbPlan  = JSON.parse(JSON.stringify(plan));
+  pbStep  = 2;
+  openPlanBuilderPage();
+}
+
+/* ── Plan Builder ── */
+function openPlanBuilder(templateId) {
+  pbPlan  = { id: null, name: '', weeks: 12, goal: 'hypertrophy', sessions: [] };
+  pbStep  = 1;
+  renderPbTemplates();
+  openPlanBuilderPage();
+  if (templateId) pbSelectTemplate(templateId);
+}
+
+function openPlanBuilderPage() {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-planbuilder').classList.add('active');
+  ['pb-step-1','pb-step-2','pb-step-3'].forEach(id => document.getElementById(id).classList.remove('active'));
+  document.getElementById('pb-step-' + pbStep).classList.add('active');
+  updatePbStepIndicator();
+  document.getElementById('pbSaveBtn').style.visibility = pbStep === 3 ? 'visible' : 'hidden';
+  window.scrollTo(0, 0);
+}
+
+function pbGoBack() {
+  if (pbStep === 1) { navTo('plan'); return; }
+  pbStep--;
+  document.querySelectorAll('.pb-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('pb-step-' + pbStep).classList.add('active');
+  document.getElementById('pbSaveBtn').style.visibility = pbStep === 3 ? 'visible' : 'hidden';
+  updatePbStepIndicator();
+  window.scrollTo(0, 0);
+}
+
+function pbNextStep() {
+  if (pbStep === 2) {
+    var name = document.getElementById('pbName').value.trim();
+    if (!name) { alert('Please give your plan a name.'); return; }
+    pbPlan.name = name;
+    if (!pbPlan.sessions.length) {
+      pbPlan.sessions = [{ id: Date.now()+'', name: 'Session A', days: [], exercises: [] }];
+    }
+    renderPbSessions();
+  }
+  pbStep++;
+  document.querySelectorAll('.pb-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('pb-step-' + pbStep).classList.add('active');
+  document.getElementById('pbSaveBtn').style.visibility = pbStep === 3 ? 'visible' : 'hidden';
+  updatePbStepIndicator();
+  window.scrollTo(0, 0);
+}
+
+function updatePbStepIndicator() {
+  [1,2,3].forEach(n => {
+    var dot  = document.getElementById('pbDot'  + n);
+    var line = document.getElementById('pbLine' + n);
+    dot.classList.remove('active','done');
+    if (n < pbStep)  { dot.classList.add('done'); if (line) line.classList.add('done'); }
+    if (n === pbStep){ dot.classList.add('active'); if (line) line.classList.remove('done'); }
+    if (n > pbStep)  { if (line) line.classList.remove('done'); }
+  });
+}
+
+/* Templates */
+function renderPbTemplates() {
+  var html = PLAN_TEMPLATES.map(t =>
+    `<div class="pb-template-card" id="pbt-${t.id}" onclick="pbSelectTemplate('${t.id}')">
+      <div class="pb-template-emoji">${t.emoji}</div>
+      <div>
+        <div class="pb-template-name">${t.name}</div>
+        <div class="pb-template-meta">${t.tag}</div>
+        <div class="pb-template-desc">${t.description}</div>
+      </div>
+    </div>`
+  ).join('');
+  document.getElementById('pbTemplateList').innerHTML = html;
+}
+
+function pbSelectTemplate(id) {
+  document.querySelectorAll('.pb-template-card').forEach(c => c.classList.remove('selected'));
+  if (id) {
+    var t = PLAN_TEMPLATES.find(t => t.id === id);
+    if (t) {
+      document.getElementById('pbt-' + id)?.classList.add('selected');
+      pbPlan = {
+        id: null, templateId: id, name: t.name, weeks: t.weeks, goal: t.goal,
+        sessions: JSON.parse(JSON.stringify(t.sessions))
+      };
+      /* Pre-fill step 2 */
+      document.getElementById('pbName').value = t.name;
+      document.querySelectorAll('#pbWeekPicker .pb-chip').forEach(c => {
+        c.classList.toggle('selected', +c.textContent === t.weeks);
+      });
+      pbPlan.weeks = t.weeks;
+      document.querySelectorAll('[data-pb-goal]').forEach(c => {
+        c.classList.toggle('selected', c.dataset.pbGoal === t.goal);
+      });
+      pbPlan.goal = t.goal;
+    }
+  } else {
+    pbPlan = { id: null, name: '', weeks: 12, goal: 'hypertrophy', sessions: [] };
+    document.getElementById('pbName').value = '';
+  }
+  pbNextStep();
+}
+
+function pbSelectChip(el, groupId, val) {
+  document.querySelectorAll('#' + groupId + ' .pb-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  if (groupId === 'pbWeekPicker') pbPlan.weeks = val;
+}
+
+function pbSelectGoal(el) {
+  document.querySelectorAll('[data-pb-goal]').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  pbPlan.goal = el.dataset.pbGoal;
+}
+
+/* Sessions */
+function renderPbSessions() {
+  var html = pbPlan.sessions.map((s, si) => {
+    var hasEx = s.exercises.length > 0;
+    var exColHeaders = hasEx ? `<div class="pb-ex-col-headers">
+      <div class="pb-ex-col-h" style="text-align:left">Exercise</div>
+      <div class="pb-ex-col-h">Sets</div>
+      <div class="pb-ex-col-h">Reps</div>
+      <div class="pb-ex-col-h">Start kg</div>
+      <div class="pb-ex-col-h">End reps</div>
+      <div class="pb-ex-col-h"></div>
+    </div>` : '';
+    var exRows = s.exercises.map((ex, ei) =>
+      `<div class="pb-ex-row">
+        <div><div class="pb-ex-name">${ex.name}</div><div class="pb-ex-cat">${ex.cat}</div></div>
+        <input class="pb-ex-input" type="number" value="${ex.sets}"    min="1" max="10"  oninput="pbUpdateEx(${si},${ei},'sets',this.value)"   placeholder="3">
+        <input class="pb-ex-input" type="number" value="${ex.reps}"    min="1" max="50"  oninput="pbUpdateEx(${si},${ei},'reps',this.value)"   placeholder="10">
+        <input class="pb-ex-input" type="number" value="${ex.startKg}" min="0" max="999" step="0.5" oninput="pbUpdateEx(${si},${ei},'startKg',this.value)" placeholder="0">
+        <input class="pb-ex-input" type="number" value="${ex.endReps}" min="1" max="50"  oninput="pbUpdateEx(${si},${ei},'endReps',this.value)" placeholder="${ex.reps}">
+        <button class="pb-ex-remove" onclick="pbRemoveEx(${si},${ei})">✕</button>
+      </div>`
+    ).join('');
+    var dayChips = ['MON','TUE','WED','THU','FRI','SAT','SUN'].map(d =>
+      `<div class="pb-day-chip ${s.days.includes(d) ? 'on' : ''}" onclick="pbToggleDay(${si},'${d}')">${d.slice(0,2)}</div>`
+    ).join('');
+    return `<div class="pb-session-card" id="pbs-${si}">
+      <div class="pb-session-header">
+        <input class="pb-session-name-input" value="${s.name}" placeholder="Session name" oninput="pbUpdateSessionName(${si},this.value)">
+        <button class="pb-session-remove" onclick="pbRemoveSession(${si})" title="Remove session">✕</button>
+      </div>
+      <div class="pb-day-row">${dayChips}</div>
+      ${exColHeaders}${exRows}
+      <button class="pb-add-ex-btn" onclick="pbOpenExPicker(${si})">+ Add exercise</button>
+    </div>`;
+  }).join('');
+  document.getElementById('pbSessionList').innerHTML = html;
+}
+
+function pbAddSession() {
+  pbPlan.sessions.push({ id: Date.now()+'', name: 'Session ' + String.fromCharCode(65 + pbPlan.sessions.length), days: [], exercises: [] });
+  renderPbSessions();
+}
+
+function pbRemoveSession(si) {
+  if (pbPlan.sessions.length <= 1) { alert('A plan needs at least one session.'); return; }
+  pbPlan.sessions.splice(si, 1);
+  renderPbSessions();
+}
+
+function pbUpdateSessionName(si, val) { pbPlan.sessions[si].name = val; }
+function pbToggleDay(si, day) {
+  var days = pbPlan.sessions[si].days;
+  var idx  = days.indexOf(day);
+  if (idx > -1) days.splice(idx, 1); else days.push(day);
+  var chip = document.querySelector(`#pbs-${si} .pb-day-row .pb-day-chip:nth-child(${['MON','TUE','WED','THU','FRI','SAT','SUN'].indexOf(day)+1})`);
+  if (chip) chip.classList.toggle('on', days.includes(day));
+}
+function pbUpdateEx(si, ei, field, val) {
+  pbPlan.sessions[si].exercises[ei][field] = +val || 0;
+}
+function pbRemoveEx(si, ei) {
+  pbPlan.sessions[si].exercises.splice(ei, 1);
+  renderPbSessions();
+}
+
+/* Exercise picker */
+function pbOpenExPicker(si) {
+  pbExTarget = { si };
+  exPickerCat = 'Chest';
+  renderExPickerCats();
+  renderExPickerList();
+  openSheet('exPickerSheet');
+}
+
+function renderExPickerCats() {
+  var cats = Object.keys(EXERCISE_LIBRARY);
+  document.getElementById('exPickerCats').innerHTML = cats.map(cat =>
+    `<div class="ex-picker-cat ${cat === exPickerCat ? 'active' : ''}" onclick="exPickerSelectCat('${cat}')">${cat}</div>`
+  ).join('');
+}
+
+function exPickerSelectCat(cat) {
+  exPickerCat = cat;
+  document.querySelectorAll('.ex-picker-cat').forEach(c => c.classList.toggle('active', c.textContent === cat));
+  renderExPickerList();
+}
+
+function renderExPickerList() {
+  var exercises = EXERCISE_LIBRARY[exPickerCat] || [];
+  document.getElementById('exPickerList').innerHTML = exercises.map(name =>
+    `<div class="ex-picker-item" onclick="pbAddExFromPicker('${name.replace(/'/g,"\\'")}','${exPickerCat}')">
+      ${name}<span class="ex-picker-item-arrow">+</span>
+    </div>`
+  ).join('');
+}
+
+function pbAddExFromPicker(name, cat) {
+  if (pbExTarget === null) return;
+  pbPlan.sessions[pbExTarget.si].exercises.push({ name, cat, sets:3, reps:10, startKg:0, endReps:12 });
+  closeSheet('exPickerSheet');
+  renderPbSessions();
+}
+
+/* Save plan */
+function savePlan() {
+  var name = pbPlan.name || document.getElementById('pbName').value.trim();
+  if (!name) { alert('Please give your plan a name.'); pbStep = 2; openPlanBuilderPage(); return; }
+  if (!pbPlan.sessions.length) { alert('Add at least one session.'); return; }
+  pbPlan.name = name;
+  if (!pbPlan.id) pbPlan.id = 'plan_' + Date.now();
+  var idx = savedPlans.findIndex(p => p.id === pbPlan.id);
+  if (idx > -1) savedPlans[idx] = JSON.parse(JSON.stringify(pbPlan));
+  else          savedPlans.push(JSON.parse(JSON.stringify(pbPlan)));
+  if (!activePlanId) activePlanId = pbPlan.id;
+  persistPlans();
+  navTo('plan');
+  showNotif('✅', 'Plan saved!', pbPlan.name + ' is now your active plan.');
+}
+
+function persistPlans() {
+  try { localStorage.setItem('ql_plans', JSON.stringify({ plans: savedPlans, activeId: activePlanId })); } catch(e) {}
+}
+
+function loadPlans() {
+  try {
+    var raw = localStorage.getItem('ql_plans');
+    if (!raw) return;
+    var d = JSON.parse(raw);
+    savedPlans   = d.plans  || [];
+    activePlanId = d.activeId || null;
+  } catch(e) {}
+}
 
 /* ══════════════════════════════════════════ */
 /*  Session Log                              */
