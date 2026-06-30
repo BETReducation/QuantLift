@@ -150,7 +150,8 @@ function completeOnboarding() {
   var equipLabels = { full: 'Full gym', home: 'Home gym', dumbbells: 'Dumbbells', bodyweight: 'Bodyweight' };
   document.getElementById('pEquip').textContent = equipLabels[onbData.equipment] || 'Full gym';
 
-  enterMember(onbData.name);
+  saveSession('member', onbData.name, onbData);
+  enterMember(onbData.name, true);
 }
 
 /* Onboarding selection helpers */
@@ -186,8 +187,51 @@ function doLogin() {
   enterMember('Alex Johnson');
 }
 
+function saveSession(mode, name, data) {
+  try {
+    localStorage.setItem('ql_session', JSON.stringify({ mode, name, data, ts: Date.now() }));
+  } catch(e) {}
+}
+
+function clearSession() {
+  try { localStorage.removeItem('ql_session'); } catch(e) {}
+}
+
+function restoreSession() {
+  try {
+    var raw = localStorage.getItem('ql_session');
+    if (!raw) return false;
+    var s = JSON.parse(raw);
+    if (!s || !s.mode) return false;
+    if (s.mode === 'guest') {
+      enterGuest(); return true;
+    }
+    if (s.mode === 'member' && s.name) {
+      if (s.data) {
+        onbData = Object.assign(onbData, s.data);
+        var initials = s.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+        document.getElementById('profileAvatar').textContent = initials;
+        document.getElementById('profileName').textContent   = s.name;
+        document.getElementById('pName').textContent         = s.name;
+        if (s.data.age)        document.getElementById('pAge').textContent        = s.data.age;
+        if (s.data.weight)     document.getElementById('pWeight').textContent     = s.data.weight + 'kg';
+        if (s.data.height)     document.getElementById('pHeight').textContent     = s.data.height + 'cm';
+        if (s.data.daysPerWeek)document.getElementById('pDays').textContent       = s.data.daysPerWeek;
+        if (s.data.sessionLen) document.getElementById('pSessionLen').textContent = s.data.sessionLen.replace('-','–') + ' min';
+        var goalLabels = { hypertrophy:'Hypertrophy', strength:'Strength', fat_loss:'Fat loss', endurance:'Endurance', fitness:'General fitness', athletic:'Athletic performance' };
+        if (s.data.goal)       document.getElementById('pGoal').textContent       = goalLabels[s.data.goal] || 'Hypertrophy';
+        var equipLabels = { full:'Full gym', home:'Home gym', dumbbells:'Dumbbells', bodyweight:'Bodyweight' };
+        if (s.data.equipment)  document.getElementById('pEquip').textContent      = equipLabels[s.data.equipment] || 'Full gym';
+      }
+      enterMember(s.name, true); return true;
+    }
+  } catch(e) {}
+  return false;
+}
+
 function enterGuest() {
   userState.mode = 'guest';
+  saveSession('guest', null, null);
   document.body.classList.add('guest-mode');
   document.getElementById('page-auth').classList.remove('active');
   document.getElementById('bottomNav').style.display = 'flex';
@@ -202,8 +246,9 @@ function enterGuest() {
   setTimeout(() => showNotif('👋', 'Welcome to QuantLift!', 'You\'re browsing as a guest. Sign up to save your progress.'), 600);
 }
 
-function enterMember(name) {
+function enterMember(name, skipCheckin) {
   userState.mode = 'member';
+  if (!skipCheckin) saveSession('member', name, onbData);
   document.body.classList.remove('guest-mode');
   var first = name.split(' ')[0];
   document.getElementById('page-auth').classList.remove('active');
@@ -219,7 +264,7 @@ function enterMember(name) {
   document.getElementById('sugHeader').textContent = 'Personalised for this week';
   navTo('home');
   setTimeout(() => showNotif('🏋️', 'Ready to train, ' + first + '?', 'Your Strength A session is planned for today.'), 800);
-  setTimeout(() => checkWeeklyCheckin(), 2000);
+  if (!skipCheckin) setTimeout(() => checkWeeklyCheckin(), 2000);
 }
 
 function greeting() {
@@ -229,6 +274,7 @@ function greeting() {
 
 function logOut() {
   if (!confirm('Log out of QuantLift?')) return;
+  clearSession();
   userState.mode = 'none';
   document.body.classList.remove('guest-mode');
   chartsRendered = false;
@@ -600,6 +646,7 @@ function setPeriod(el, period) {
 /* ── Init ── */
 updateRestDisplay();
 renderWater();
+restoreSession();
 
 /* ══════════════════════════════════════════ */
 /*  Session Log                              */
