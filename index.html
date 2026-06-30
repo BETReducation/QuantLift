@@ -206,7 +206,7 @@
       <div class="today-ex-item"><div class="ex-dot accent"></div><div class="ex-name">Bench Press</div><div class="ex-detail">4 × 6 @ 80kg</div></div>
       <div class="today-ex-item"><div class="ex-dot green"></div><div class="ex-name">Deadlift</div><div class="ex-detail">3 × 5 @ 130kg</div></div>
       <div class="today-ex-item"><div class="ex-dot" style="background:var(--amber)"></div><div class="ex-name">Pull-up</div><div class="ex-detail">3 × 8 bodyweight</div></div>
-      <button class="btn btn-primary btn-block" style="margin-top:14px" onclick="navTo('track')">Start session →</button>
+      <button class="btn btn-primary btn-block" style="margin-top:14px" onclick="startSessionLog()">Start session →</button>
     </div>
   </div>
 
@@ -574,6 +574,81 @@
     </div>
     <div style="height:20px"></div>
   </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!--  PAGE: Session Log                      -->
+<!-- ════════════════════════════════════════ -->
+<div class="page" id="page-sessionlog">
+
+  <!-- ── Top band: session info + live clock ── -->
+  <div class="sl-header">
+    <div class="sl-session-info">
+      <div class="sl-session-num">Session <span id="slNum">3</span></div>
+      <div class="sl-session-of">of <span id="slTotal">12</span> sessions</div>
+      <div class="sl-type-pill" id="slTypePill">Pull Session</div>
+    </div>
+    <div class="sl-timer-block">
+      <div class="sl-duration" id="slDuration">00:00</div>
+      <div class="sl-duration-lbl">elapsed</div>
+    </div>
+    <div class="sl-header-right">
+      <div class="sl-live-date" id="slDateDisplay"></div>
+      <div class="sl-live-time" id="slTimeDisplay"></div>
+      <button class="sl-end-btn" onclick="endSlSession()">End ■</button>
+    </div>
+  </div>
+
+  <!-- ── Exercise cards (JS-rendered) ── -->
+  <div class="sl-ex-list" id="slExerciseList"></div>
+
+  <!-- ── Analysis section ── -->
+  <div class="sl-analysis-section">
+
+    <div class="sl-analysis-block">
+      <div class="sl-analysis-header">
+        <div class="sl-analysis-icon">📈</div>
+        <div>
+          <div class="sl-analysis-title">Short-term progress</div>
+          <div class="sl-analysis-sub">vs your last Pull Session — progressive overload target: +1 rep per set</div>
+        </div>
+      </div>
+      <div id="slShortTermBars"></div>
+    </div>
+
+    <div class="sl-analysis-block">
+      <div class="sl-analysis-header">
+        <div class="sl-analysis-icon">🎯</div>
+        <div>
+          <div class="sl-analysis-title">12-week plan targets</div>
+          <div class="sl-analysis-sub">Where you should be at session <span id="slAnalysisSession">3</span> of <span id="slAnalysisTotal">12</span></div>
+        </div>
+      </div>
+      <div id="slPlanBars"></div>
+    </div>
+
+    <div class="sl-session-stats">
+      <div class="sl-stat-item">
+        <div class="sl-stat-val" id="slVolDisplay">0</div>
+        <div class="sl-stat-lbl">kg volume</div>
+      </div>
+      <div class="sl-stat-item">
+        <div class="sl-stat-val" style="color:var(--green)" id="slSetsDisplay">0</div>
+        <div class="sl-stat-lbl">sets done</div>
+      </div>
+      <div class="sl-stat-item">
+        <div class="sl-stat-val" style="color:var(--accent)" id="slRepsDisplay">0</div>
+        <div class="sl-stat-lbl">total reps</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Sticky end session button ── -->
+  <div class="sl-sticky-end">
+    <button class="btn btn-primary btn-block" onclick="endSlSession()">End session &amp; save ✓</button>
+  </div>
+
 </div>
 
 <!-- ════════════════════════════════════════ -->

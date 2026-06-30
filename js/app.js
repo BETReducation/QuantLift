@@ -600,3 +600,275 @@ function setPeriod(el, period) {
 /* ── Init ── */
 updateRestDisplay();
 renderWater();
+
+/* ══════════════════════════════════════════ */
+/*  Session Log                              */
+/* ══════════════════════════════════════════ */
+var slSession = { num: 3, total: 12, type: 'Pull Session', startTs: null, elapsed: 0, interval: null };
+
+var slExercises = [
+  {
+    name: 'Pull-up', type: 'Strength',
+    lastSets: [7, 7, 6, 6], targetReps: [8, 8, 8, 8], planStart: 5, planEnd: 12,
+    sets: [{ kg: null, reps: null, done: false }, { kg: null, reps: null, done: false }, { kg: null, reps: null, done: false }, { kg: null, reps: null, done: false }],
+    expanded: true
+  },
+  {
+    name: 'Barbell Row', type: 'Strength',
+    lastSets: [7, 7, 6, 6], targetReps: [8, 8, 8, 8], planStart: 6, planEnd: 12,
+    sets: [{ kg: 70, reps: null, done: false }, { kg: 70, reps: null, done: false }, { kg: 70, reps: null, done: false }, { kg: 70, reps: null, done: false }],
+    expanded: false
+  },
+  {
+    name: 'Lat Pulldown', type: 'Hypertrophy',
+    lastSets: [9, 9, 8], targetReps: [10, 10, 10], planStart: 8, planEnd: 15,
+    sets: [{ kg: 60, reps: null, done: false }, { kg: 60, reps: null, done: false }, { kg: 60, reps: null, done: false }],
+    expanded: false
+  },
+  {
+    name: 'Face Pulls', type: 'Hypertrophy',
+    lastSets: [11, 11, 10], targetReps: [12, 12, 12], planStart: 10, planEnd: 20,
+    sets: [{ kg: 20, reps: null, done: false }, { kg: 20, reps: null, done: false }, { kg: 20, reps: null, done: false }],
+    expanded: false
+  },
+  {
+    name: 'Bicep Curl', type: 'Hypertrophy',
+    lastSets: [10, 9, 9], targetReps: [10, 10, 10], planStart: 8, planEnd: 15,
+    sets: [{ kg: 15, reps: null, done: false }, { kg: 15, reps: null, done: false }, { kg: 15, reps: null, done: false }],
+    expanded: false
+  }
+];
+
+function startSessionLog() {
+  if (slSession.interval) clearInterval(slSession.interval);
+  slSession.startTs = Date.now();
+  slSession.elapsed = 0;
+
+  slExercises.forEach((ex, i) => {
+    ex.expanded = i === 0;
+    ex.sets.forEach(s => { s.reps = null; s.done = false; });
+  });
+
+  document.getElementById('slNum').textContent            = slSession.num;
+  document.getElementById('slTotal').textContent          = slSession.total;
+  document.getElementById('slTypePill').textContent       = slSession.type;
+  document.getElementById('slAnalysisSession').textContent = slSession.num;
+  document.getElementById('slAnalysisTotal').textContent  = slSession.total;
+  document.getElementById('slDuration').textContent       = '00:00';
+
+  slUpdateDateTime();
+  slSession.interval = setInterval(() => {
+    slSession.elapsed++;
+    slUpdateDuration();
+    slUpdateDateTime();
+  }, 1000);
+
+  renderSlExercises();
+  updateSlAnalysis();
+  updateSlStats();
+  navTo('sessionlog');
+}
+
+function slUpdateDuration() {
+  var s = slSession.elapsed;
+  var m = Math.floor(s / 60), sec = s % 60, h = Math.floor(m / 60);
+  document.getElementById('slDuration').textContent = h > 0
+    ? h + ':' + String(m % 60).padStart(2, '0') + ':' + String(sec).padStart(2, '0')
+    : String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+}
+
+function slUpdateDateTime() {
+  var now = new Date();
+  var days   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('slDateDisplay').textContent = days[now.getDay()] + ' ' + now.getDate() + ' ' + months[now.getMonth()];
+  document.getElementById('slTimeDisplay').textContent = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+}
+
+function renderSlExercises() {
+  var html = slExercises.map((ex, ei) => {
+    var doneSets  = ex.sets.filter(s => s.done).length;
+    var totalSets = ex.sets.length;
+    var allDone   = doneSets === totalSets;
+    var typePill  = ex.type === 'Strength'
+      ? '<span class="pill pill-primary" style="font-size:10px;padding:2px 8px">Strength</span>'
+      : '<span class="pill pill-accent"  style="font-size:10px;padding:2px 8px">' + ex.type + '</span>';
+
+    var setsHtml = `
+      <div class="sl-sets-header">
+        <div class="sl-col-h">#</div>
+        <div class="sl-col-h">Last</div>
+        <div class="sl-col-h">Target</div>
+        <div class="sl-col-h actual-h">Actual</div>
+        <div class="sl-col-h">kg</div>
+        <div class="sl-col-h"></div>
+      </div>` +
+      ex.sets.map((set, si) => {
+        var last   = ex.lastSets[si]   !== undefined ? ex.lastSets[si]   : '–';
+        var target = ex.targetReps[si] !== undefined ? ex.targetReps[si] : '–';
+        var kgVal  = set.kg   !== null ? set.kg   : '';
+        var repVal = set.reps !== null ? set.reps : '';
+        return `
+          <div class="sl-set-row${set.done ? ' set-done' : ''}">
+            <div class="sl-set-num">${si + 1}</div>
+            <div class="sl-set-last">${last}</div>
+            <div class="sl-set-target">${target}</div>
+            <input class="sl-set-actual${set.done ? ' done-input' : ''}"
+                   type="number" inputmode="numeric"
+                   value="${repVal}" placeholder="${target}"
+                   min="0" max="99"
+                   oninput="slUpdateSet(${ei},${si},'reps',this.value)">
+            <input class="sl-set-kg"
+                   type="number" inputmode="decimal"
+                   value="${kgVal}" placeholder="–"
+                   min="0" max="999" step="0.5"
+                   oninput="slUpdateSet(${ei},${si},'kg',this.value)">
+            <div class="sl-set-check${set.done ? ' checked' : ''}" onclick="slCompleteSet(${ei},${si})">
+              ${set.done ? '✓' : ''}
+            </div>
+          </div>`;
+      }).join('');
+
+    return `
+      <div class="sl-ex-card${ex.expanded ? ' expanded' : ''}${allDone ? ' all-done' : ''}" id="sl-ex-${ei}">
+        <div class="sl-ex-card-header" onclick="slToggleCard(${ei})">
+          <div class="sl-ex-name-wrap">
+            <div class="sl-ex-name">${ex.name}</div>
+            <div style="margin-top:3px">${typePill}</div>
+          </div>
+          <div class="sl-ex-progress${allDone ? ' done' : ''}">${doneSets}/${totalSets} sets${allDone ? ' ✓' : ''}</div>
+          <div class="sl-ex-arrow">⌄</div>
+        </div>
+        <div class="sl-ex-sets">${setsHtml}</div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('slExerciseList').innerHTML = html;
+}
+
+function slToggleCard(ei) {
+  slExercises[ei].expanded = !slExercises[ei].expanded;
+  var card = document.getElementById('sl-ex-' + ei);
+  if (!card) return;
+  card.classList.toggle('expanded', slExercises[ei].expanded);
+}
+
+function slUpdateSet(ei, si, field, val) {
+  var v = val === '' ? null : (field === 'reps' ? parseInt(val) : parseFloat(val));
+  slExercises[ei].sets[si][field] = isNaN(v) ? null : v;
+  updateSlAnalysis();
+  updateSlStats();
+}
+
+function slCompleteSet(ei, si) {
+  var set = slExercises[ei].sets[si];
+  set.done = !set.done;
+  if (set.done && set.reps === null) set.reps = slExercises[ei].targetReps[si];
+
+  var allDone = slExercises[ei].sets.every(s => s.done);
+  if (allDone) {
+    slExercises[ei].expanded = false;
+    for (var ni = ei + 1; ni < slExercises.length; ni++) {
+      if (!slExercises[ni].sets.every(s => s.done)) {
+        slExercises[ni].expanded = true;
+        break;
+      }
+    }
+  }
+
+  renderSlExercises();
+  updateSlAnalysis();
+  updateSlStats();
+
+  if (allDone) {
+    setTimeout(() => {
+      var next = document.getElementById('sl-ex-' + (ei + 1));
+      if (next) next.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
+  }
+}
+
+function slPlanTarget(ex) {
+  var ratio = (slSession.num - 1) / Math.max(slSession.total - 1, 1);
+  return Math.round(ex.planStart + ratio * (ex.planEnd - ex.planStart));
+}
+
+function updateSlAnalysis() {
+  var shortHtml = '', planHtml = '';
+
+  slExercises.forEach(ex => {
+    var planTgt = slPlanTarget(ex);
+    var shortRows = '', planRows = '';
+
+    ex.sets.forEach((set, si) => {
+      var last   = ex.lastSets[si]   || 0;
+      var target = ex.targetReps[si] || 0;
+      var actual = (set.done || set.reps !== null) ? (set.reps || 0) : null;
+
+      /* Short-term: progressive overload (+1 rep vs last = green) */
+      var stCls, stLabel, stW;
+      if (actual === null) {
+        stCls = 'pending'; stLabel = 'Not done yet'; stW = 0;
+      } else if (actual >= last + 1) {
+        stCls = 'green';  stLabel = '+' + (actual - last) + ' rep' + (actual - last > 1 ? 's' : '') + ' vs last'; stW = 100;
+      } else if (actual === last) {
+        stCls = 'amber';  stLabel = 'Same as last (' + last + ')'; stW = Math.round(actual / (last + 2) * 90);
+      } else {
+        stCls = 'red';    stLabel = (actual - last) + ' vs last'; stW = Math.max(10, Math.round(actual / (last + 1) * 80));
+      }
+
+      /* Plan target: linear progression */
+      var ptCls, ptLabel, ptW;
+      if (actual === null) {
+        ptCls = 'pending'; ptLabel = 'Not done yet'; ptW = 0;
+      } else {
+        var pct = planTgt > 0 ? Math.min(100, Math.round(actual / planTgt * 100)) : 100;
+        if (actual >= planTgt)        { ptCls = 'green'; ptLabel = actual + ' / ' + planTgt + ' ✓'; ptW = 100; }
+        else if (actual >= planTgt-1) { ptCls = 'amber'; ptLabel = actual + ' / ' + planTgt; ptW = pct; }
+        else                          { ptCls = 'red';   ptLabel = actual + ' / ' + planTgt; ptW = pct; }
+      }
+
+      shortRows += `<div class="sl-bar-row">
+        <div class="sl-bar-set-lbl">Set ${si+1}</div>
+        <div class="sl-bar-track"><div class="sl-bar-fill ${stCls}" style="width:${stW}%"></div></div>
+        <div class="sl-bar-value ${stCls}">${stLabel}</div>
+      </div>`;
+
+      planRows += `<div class="sl-bar-row">
+        <div class="sl-bar-set-lbl">Set ${si+1}</div>
+        <div class="sl-bar-track"><div class="sl-bar-fill ${ptCls}" style="width:${ptW}%"></div></div>
+        <div class="sl-bar-value ${ptCls}">${ptLabel}</div>
+      </div>`;
+    });
+
+    shortHtml += `<div class="sl-bar-group"><div class="sl-bar-ex-name">${ex.name}</div>${shortRows}</div>`;
+    planHtml  += `<div class="sl-bar-group"><div class="sl-bar-ex-name">${ex.name}</div>${planRows}</div>`;
+  });
+
+  document.getElementById('slShortTermBars').innerHTML = shortHtml;
+  document.getElementById('slPlanBars').innerHTML      = planHtml;
+}
+
+function updateSlStats() {
+  var vol = 0, sets = 0, reps = 0;
+  slExercises.forEach(ex => {
+    ex.sets.forEach(s => {
+      if (s.done) { sets++; reps += s.reps || 0; vol += (s.reps || 0) * (s.kg || 0); }
+    });
+  });
+  document.getElementById('slVolDisplay').textContent  = vol.toLocaleString();
+  document.getElementById('slSetsDisplay').textContent = sets;
+  document.getElementById('slRepsDisplay').textContent = reps;
+}
+
+function endSlSession() {
+  if (!confirm('End this session and save?')) return;
+  if (slSession.interval) { clearInterval(slSession.interval); slSession.interval = null; }
+  var sets = slExercises.reduce((t, ex) => t + ex.sets.filter(s => s.done).length, 0);
+  var vol  = slExercises.reduce((t, ex) => t + ex.sets.reduce((st, s) => st + (s.done ? (s.reps||0)*(s.kg||0) : 0), 0), 0);
+  var dur  = slSession.elapsed;
+  var m = Math.floor(dur/60), h = Math.floor(m/60);
+  var durStr = h > 0 ? h+'h '+( m%60)+'min' : m+'min';
+  showNotif('🏆', 'Session complete!', sets + ' sets · ' + vol.toLocaleString() + 'kg · ' + durStr);
+  navTo('analytics');
+}
