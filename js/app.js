@@ -715,7 +715,7 @@ function renderSlExercises() {
             <div class="sl-set-target">${target}</div>
             <input class="sl-set-actual${set.done ? ' done-input' : ''}"
                    type="number" inputmode="numeric"
-                   value="${repVal}" placeholder="${target}"
+                   value="${repVal}" placeholder=""
                    min="0" max="99"
                    oninput="slUpdateSet(${ei},${si},'reps',this.value)">
             <input class="sl-set-kg"
